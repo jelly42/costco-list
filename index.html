@@ -186,6 +186,21 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .item-row:hover .item-thumb-placeholder{opacity:1}
 .item-thumb-placeholder:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
 
+/* Hover 預覽 popup */
+.img-popup{
+  display:none;position:fixed;z-index:300;
+  background:var(--surface);border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.22);
+  padding:10px;width:220px;
+  pointer-events:none;
+}
+.img-popup.show{display:block;pointer-events:auto;}
+.img-popup img{width:100%;border-radius:8px;display:block;margin-bottom:8px;object-fit:contain;max-height:180px}
+.img-popup-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4}
+.img-popup-link{display:block;width:100%;height:30px;border-radius:7px;border:1.5px solid var(--blue);background:var(--blue-light);color:var(--blue);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;text-align:center;line-height:30px}
+.img-popup-link:hover{background:#cfe3f7}
+.img-popup-nolnk{font-size:11px;color:var(--text3);text-align:center;padding:2px 0}
+
 /* 圖片 Modal */
 .img-modal{background:var(--surface);border-radius:12px;padding:16px;width:90%;max-width:380px}
 .img-modal h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)}
@@ -249,6 +264,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     <button class="checkout-btn" id="checkout-btn" onclick="checkout()" style="display:none">✅ 結帳完成</button>
     <button class="clear-btn" id="clear-btn" onclick="clearCart()" style="display:none">清空</button>
   </div>
+</div>
+
+<!-- 商品圖片 Hover 預覽 -->
+<div id="img-popup" class="img-popup" onmouseenter="keepImgPopup()" onmouseleave="hideImgPopup()">
+  <div class="img-popup-name" id="img-popup-name"></div>
+  <img id="img-popup-img" src="" alt=""/>
+  <button class="img-popup-link" id="img-popup-link" onclick="imgPopupOpenLink()">開啟商品頁 ↗</button>
+  <div class="img-popup-nolnk" id="img-popup-nolnk" style="display:none">（未設定商品連結）</div>
 </div>
 
 <!-- 圖片 Modal -->
@@ -686,7 +709,61 @@ async function loadState(){
   document.getElementById("save-ind").textContent=(d?"資料已載入":"首次使用")+" · "+(USE_CLOUD?"☁️ 雲端":"💾 本機");
 }
 
-// ── 圖片 Modal ───────────────────────────────────────────
+// ── 商品圖片 Hover 預覽 ──────────────────────────────────
+let _popupTimer=null;
+let _popupItemId=null;
+let _popupItemUrl=null;
+
+async function showImgPopup(id,name,url,thumbEl){
+  clearTimeout(_popupTimer);
+  _popupItemId=id;
+  _popupItemUrl=url||"";
+
+  // 載入圖片
+  const src=await imgLoad(id);
+  if(!src)return; // 沒有圖片就不顯示
+
+  const popup=document.getElementById("img-popup");
+  document.getElementById("img-popup-name").textContent=name;
+  document.getElementById("img-popup-img").src=src;
+
+  // 連結按鈕
+  const linkBtn=document.getElementById("img-popup-link");
+  const noLnk=document.getElementById("img-popup-nolnk");
+  if(url){linkBtn.style.display="block";noLnk.style.display="none";}
+  else{linkBtn.style.display="none";noLnk.style.display="block";}
+
+  // 定位（在縮圖右側或左側，避免超出畫面）
+  const rect=thumbEl.getBoundingClientRect();
+  const pw=220,ph=280;
+  let left=rect.right+10;
+  let top=rect.top;
+  if(left+pw>window.innerWidth)left=rect.left-pw-10;
+  if(top+ph>window.innerHeight)top=window.innerHeight-ph-10;
+  if(top<8)top=8;
+  popup.style.left=left+"px";
+  popup.style.top=top+"px";
+  popup.classList.add("show");
+}
+
+function hideImgPopup(immediate){
+  if(immediate){
+    document.getElementById("img-popup").classList.remove("show");
+    return;
+  }
+  _popupTimer=setTimeout(()=>{
+    document.getElementById("img-popup").classList.remove("show");
+  },200);
+}
+
+function keepImgPopup(){
+  clearTimeout(_popupTimer);
+}
+
+function imgPopupOpenLink(){
+  if(_popupItemUrl)openUrl(_popupItemUrl,null);
+  hideImgPopup(true);
+}
 let imgCurrentId=null; // 目前正在編輯的品項 id
 let imgPendingData=null; // 暫存待儲存的圖片資料（base64 或 url）
 
@@ -1129,9 +1206,13 @@ function renderPanel(){
         const icon=storageIcon(item.storage||"ambient");
         const safeId=id.replace(/[§]/g,"-");
         const escapedName=item.n.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+        const itemUrl2=url.replace(/'/g,"\\'");
         html+=`<div class="item-row${inCart?" in-cart":""}" onclick="toggleCart('${id}')">
           <div class="cb${inCart?" done":""}">${inCart?chk():""}</div>
-          <img id="thumb-${safeId}" class="item-thumb" style="display:none" onclick="event.stopPropagation();openImgModal('${id}','${escapedName}',event)" alt=""/>
+          <img id="thumb-${safeId}" class="item-thumb" style="display:none"
+            onclick="event.stopPropagation();openImgModal('${id}','${escapedName}',event)"
+            onmouseenter="showImgPopup('${id}','${escapedName}','${itemUrl2}',this)"
+            onmouseleave="hideImgPopup()" alt=""/>
           <button class="item-thumb-placeholder" onclick="event.stopPropagation();openImgModal('${id}','${escapedName}',event)" title="新增商品圖片">📷</button>
           ${icon?`<span class="storage-icon">${icon}</span>`:""}
           <span class="item-name" id="name-${safeId}">${item.n}</span>
@@ -1439,6 +1520,7 @@ function closeCheckoutModal(){document.getElementById("checkout-modal").classLis
 // ── 匯出/匯入 ────────────────────────────────────────────
 // ── GitHub Gist 同步 ─────────────────────────────────────
 const GIST_FILENAME="costco-list-sync.json";
+const GIST_IMG_FILENAME="costco-img-sync.json";
 let GIST_ID=null;
 
 // Token 存在 localStorage（不進 Storage API，避免跨對話外洩）
@@ -1475,6 +1557,38 @@ function gistPayload(){
   };
 }
 
+// 收集所有圖片（img: 開頭的 localStorage / Storage API key）
+async function collectAllImgs(){
+  const imgs={};
+  // 掃描所有品項 id
+  [...ALL_CAT_KEYS,"sales"].forEach(tk=>{
+    if(!data[tk])return;
+    Object.entries(data[tk].sections).forEach(([sec,items])=>{
+      items.forEach((_,i)=>{
+        const id=idOf(tk,sec,i);
+        imgs[id]=null; // 先佔位，稍後填值
+      });
+    });
+  });
+  // 非同步逐一讀取
+  await Promise.all(Object.keys(imgs).map(async id=>{
+    const v=await imgLoad(id);
+    if(v)imgs[id]=v;
+  }));
+  // 過濾掉沒有圖片的
+  return Object.fromEntries(Object.entries(imgs).filter(([,v])=>v));
+}
+
+// 把 Gist 裡的圖片還原到 localStorage
+async function restoreImgs(imgs){
+  if(!imgs||typeof imgs!=="object")return 0;
+  let count=0;
+  await Promise.all(Object.entries(imgs).map(async([id,v])=>{
+    if(v){await imgSave(id,v);count++;}
+  }));
+  return count;
+}
+
 function showGistMsg(type,msg){
   const el=document.getElementById("gist-msg");
   el.className="modal-msg "+type;el.textContent=msg;
@@ -1487,10 +1601,8 @@ function gistBtnState(loading){
 // 找現有 Gist
 async function findGist(){
   if(GIST_ID)return GIST_ID;
-  // 先從本地快取讀
   const cached=await storeLoad("cco-gist-id");
   if(cached){GIST_ID=cached;return GIST_ID;}
-  // 搜尋現有 gist
   const res=await fetch("https://api.github.com/gists",{
     headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json"}
   });
@@ -1504,24 +1616,27 @@ async function findGist(){
 async function gistPush(){
   if(!getToken()){showGistMsg("err","❌ 請先設定 GitHub Token");return;}
   gistBtnState(true);
-  showGistMsg("ok","推送中…");
+  showGistMsg("ok","收集圖片中…");
   try{
-    const body={
-      description:"Costco 新莊採購清單同步資料",
-      public:false,
-      files:{[GIST_FILENAME]:{content:JSON.stringify(gistPayload(),null,2)}}
+    // 收集圖片
+    const imgs=await collectAllImgs();
+    const imgCount=Object.keys(imgs).length;
+    showGistMsg("ok",`推送中（${imgCount} 張圖片）…`);
+
+    const files={
+      [GIST_FILENAME]:{content:JSON.stringify(gistPayload(),null,2)},
+      [GIST_IMG_FILENAME]:{content:JSON.stringify({syncedAt:new Date().toISOString(),imgs},null,0)}
     };
+    const body={description:"Costco 新莊採購清單同步資料",public:false,files};
     const existingId=await findGist();
     let res;
     if(existingId){
-      // 更新現有 Gist
       res=await fetch(`https://api.github.com/gists/${existingId}`,{
         method:"PATCH",
         headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json","Content-Type":"application/json"},
         body:JSON.stringify(body)
       });
     } else {
-      // 建立新 Gist
       res=await fetch("https://api.github.com/gists",{
         method:"POST",
         headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json","Content-Type":"application/json"},
@@ -1533,7 +1648,7 @@ async function gistPush(){
     GIST_ID=result.id;
     await storeSave("cco-gist-id",GIST_ID);
     const t=new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
-    showGistMsg("ok",`✅ 已推送到雲端（${t}）。在另一台裝置按「從雲端拉取」即可同步。`);
+    showGistMsg("ok",`✅ 已推送到雲端（${t}），含 ${imgCount} 張圖片。`);
     document.getElementById("save-ind").textContent="☁️ Gist 已同步 "+t;
   }catch(e){
     showGistMsg("err","❌ 推送失敗："+e.message);
@@ -1553,11 +1668,12 @@ async function gistPull(){
     });
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const gist=await res.json();
+
+    // 還原主資料
     const content=gist.files?.[GIST_FILENAME]?.content;
     if(!content)throw new Error("找不到同步檔案");
     const payload=JSON.parse(content);
     if(!payload.version||!payload.data)throw new Error("資料格式不正確");
-    // 套用
     data=payload.data;
     cart=payload.cart||{};
     bought=payload.bought||{};
@@ -1565,10 +1681,20 @@ async function gistPull(){
     if(payload.salesPeriod)Object.assign(salesPeriod,payload.salesPeriod);
     if(payload.customSalesData)customSalesData=payload.customSalesData;
     await saveState();
+
+    // 還原圖片
+    let imgCount=0;
+    const imgContent=gist.files?.[GIST_IMG_FILENAME]?.content;
+    if(imgContent){
+      showGistMsg("ok","還原圖片中…");
+      const imgPayload=JSON.parse(imgContent);
+      imgCount=await restoreImgs(imgPayload.imgs);
+    }
+
     updatePeriodBadge();
     renderNav();renderPanel();
     const t=new Date(payload.syncedAt).toLocaleString("zh-TW");
-    showGistMsg("ok",`✅ 拉取成功！雲端資料時間：${t}`);
+    showGistMsg("ok",`✅ 拉取成功！雲端時間：${t}${imgCount?`，已還原 ${imgCount} 張圖片`:""}。`);
   }catch(e){
     showGistMsg("err","❌ 拉取失敗："+e.message);
   }
@@ -1626,7 +1752,6 @@ async function init(){
           const remoteTime=new Date(payload.syncedAt||0);
           const localSaved=await storeLoad("cco-last-sync");
           const localTime=localSaved?new Date(localSaved):new Date(0);
-          // 只有雲端比本地新才自動套用
           if(remoteTime>localTime&&payload.data){
             data=payload.data;
             cart=payload.cart||{};
@@ -1636,6 +1761,12 @@ async function init(){
             if(payload.customSalesData)customSalesData=payload.customSalesData;
             await saveState();
             await storeSave("cco-last-sync",payload.syncedAt);
+            // 還原圖片
+            const imgContent=gist.files?.[GIST_IMG_FILENAME]?.content;
+            if(imgContent){
+              const imgPayload=JSON.parse(imgContent);
+              await restoreImgs(imgPayload.imgs);
+            }
             updatePeriodBadge();
             renderNav();renderPanel();
             const t=new Date(payload.syncedAt).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
