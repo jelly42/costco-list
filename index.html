@@ -254,21 +254,29 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 <!-- 圖片 Modal -->
 <div class="modal-overlay" id="img-modal" onclick="if(event.target===this)closeImgModal()">
   <div class="img-modal" onclick="event.stopPropagation()">
-    <h3 id="img-modal-title">商品圖片</h3>
-    <img id="img-preview" class="img-preview" alt="商品圖片"/>
+    <h3 id="img-modal-title">商品資訊</h3>
+
+    <!-- 截圖區 -->
+    <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">📷 商品截圖</div>
+    <img id="img-preview" class="img-preview" alt="商品截圖"/>
     <div class="img-upload-area" id="img-paste-area" title="點擊、拖曳或 Ctrl+V 貼上截圖" tabindex="0"
          onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
       <input type="file" id="img-file-input" accept="image/*" onchange="handleFileUpload(event)"/>
       <p>📷 點擊上傳 / 拖曳 / <b>Ctrl+V 貼上</b><br><span style="font-size:11px">手機可長按此區域貼上截圖</span></p>
     </div>
-    <div class="img-url-row">
-      <input type="text" id="img-url-input" placeholder="或貼上圖片網址（https://...）" onpaste="handleUrlPaste(event)"/>
-      <button onclick="previewFromUrl()">預覽</button>
+
+    <!-- 商品網址區 -->
+    <div style="font-size:11px;font-weight:700;color:var(--text2);margin:10px 0 5px">🔗 商品網頁連結</div>
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" id="img-url-input" placeholder="貼上商品頁網址（https://…）" style="flex:1;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;padding:0 9px;font-family:inherit;outline:none"/>
+      <button onclick="openItemUrl()" style="height:32px;padding:0 10px;border-radius:7px;border:1px solid var(--blue);background:var(--blue-light);color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">開啟 ↗</button>
     </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px">儲存後品項旁的 🔗 會連到此網址</div>
+
     <div class="img-msg" id="img-msg"></div>
     <div class="img-btns">
-      <button class="img-btn-save" onclick="saveItemImg()">💾 儲存圖片</button>
-      <button class="img-btn-del" id="img-btn-del" onclick="deleteItemImg()" style="display:none">🗑 刪除</button>
+      <button class="img-btn-save" onclick="saveItemImg()">💾 儲存</button>
+      <button class="img-btn-del" id="img-btn-del" onclick="deleteItemImg()" style="display:none">🗑 刪除截圖</button>
       <button class="img-btn-close" onclick="closeImgModal()">關閉</button>
     </div>
   </div>
@@ -686,10 +694,11 @@ async function openImgModal(id,name,e){
   e.stopPropagation();
   imgCurrentId=id;
   imgPendingData=null;
-  document.getElementById("img-modal-title").textContent="📷 "+name;
-  document.getElementById("img-url-input").value="";
+  document.getElementById("img-modal-title").textContent=name;
   document.getElementById("img-file-input").value="";
   document.getElementById("img-msg").textContent="";
+
+  // 載入現有截圖
   const existing=await imgLoad(id);
   const preview=document.getElementById("img-preview");
   const delBtn=document.getElementById("img-btn-del");
@@ -701,10 +710,21 @@ async function openImgModal(id,name,e){
     preview.src="";preview.classList.remove("show");
     delBtn.style.display="none";
   }
+
+  // 載入現有商品網址（從品項的 u 欄位）
+  const urlInput=document.getElementById("img-url-input");
+  const[tk,sec,iStr]=id.split("§");
+  const item=data[tk]?.sections[sec]?.[parseInt(iStr)];
+  urlInput.value=item?.u||"";
+
   document.getElementById("img-modal").classList.add("open");
-  // 讓貼上區可以接收 focus（方便鍵盤 Ctrl+V）
   setTimeout(()=>document.getElementById("img-paste-area")?.focus(),100);
   attachGlobalPaste();
+}
+
+function openItemUrl(){
+  const url=document.getElementById("img-url-input")?.value.trim();
+  if(url)openUrl(url,null);
 }
 function closeImgModal(){
   document.getElementById("img-modal").classList.remove("open");
@@ -772,13 +792,7 @@ function handleDrop(e){
   }
 }
 
-// 網址欄貼上時自動判斷是否為圖片網址
-function handleUrlPaste(e){
-  setTimeout(()=>{
-    const v=document.getElementById("img-url-input")?.value.trim();
-    if(v&&v.startsWith("http"))previewFromUrl();
-  },50);
-}
+// handleUrlPaste 已不需要（網址欄純粹儲存連結）
 
 // 全域 paste 監聽（Modal 開啟時，在 Modal 外按 Ctrl+V 也能貼入）
 let _globalPasteHandler=null;
@@ -798,26 +812,29 @@ function detachGlobalPaste(){
   _globalPasteHandler=null;
 }
 
-function previewFromUrl(){
-  const url=document.getElementById("img-url-input").value.trim();
-  if(!url){document.getElementById("img-msg").textContent="❌ 請輸入圖片網址";return;}
-  const preview=document.getElementById("img-preview");
-  preview.src=url;preview.classList.add("show");
-  preview.onerror=()=>{document.getElementById("img-msg").textContent="❌ 圖片載入失敗，請確認網址正確";preview.classList.remove("show");};
-  preview.onload=()=>{imgPendingData=url;document.getElementById("img-msg").textContent="✅ 預覽成功，按「儲存圖片」確認";};
-}
+// previewFromUrl 已移除，改由商品網址欄直接儲存連結
 
 async function saveItemImg(){
-  if(!imgCurrentId||!imgPendingData){document.getElementById("img-msg").textContent="❌ 尚無圖片可儲存";return;}
-  await imgSave(imgCurrentId,imgPendingData);
-  document.getElementById("img-btn-del").style.display="inline-block";
-  document.getElementById("img-msg").textContent="✅ 圖片已儲存！";
-  // 更新頁面縮圖
-  const thumb=document.getElementById("thumb-"+imgCurrentId.replace(/[§]/g,"-"));
-  if(thumb){thumb.src=imgPendingData;thumb.style.display="block";thumb.nextSibling?.remove&&thumb.nextSibling.remove();}
-  // 重新 render 讓縮圖出現
+  if(!imgCurrentId){document.getElementById("img-msg").textContent="❌ 發生錯誤";return;}
+
+  // 儲存截圖
+  if(imgPendingData){
+    await imgSave(imgCurrentId,imgPendingData);
+    document.getElementById("img-btn-del").style.display="inline-block";
+  }
+
+  // 儲存商品網址到品項 u 欄位
+  const newUrl=document.getElementById("img-url-input")?.value.trim();
+  const[tk,sec,iStr]=imgCurrentId.split("§");
+  const item=data[tk]?.sections[sec]?.[parseInt(iStr)];
+  if(item&&newUrl!==undefined){
+    item.u=newUrl||item.u; // 有填就更新，空白保留舊的
+    scheduleSave();
+  }
+
+  document.getElementById("img-msg").textContent="✅ 已儲存！";
   renderPanel();
-  setTimeout(closeImgModal,800);
+  setTimeout(closeImgModal,700);
 }
 
 async function deleteItemImg(){
