@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costco 新莊採購清單</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+:root{
+  --bg:#f7f5f0;--surface:#fff;--surface2:#f0ede6;--border:#e2ddd4;
+  --text:#1a1814;--text2:#6b6560;--text3:#a09990;
+  --green:#2d6a4f;--green-light:#e8f5ee;--green-mid:#52a87a;
+  --red:#b5352a;--red-light:#fdf0ee;
+  --blue:#1a5896;--blue-light:#e8f0fb;
+  --amber:#9a6100;--amber-light:#fef3dd;
+  --sale:#c45200;--sale-light:#fff0e6;
+  --floor1:#3d4da8;--floor1-light:#eef0fc;
+  --floorb1:#2d6a4f;--floorb1-light:#e8f5ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+.header{background:var(--green);color:white;padding:10px 14px 8px;flex-shrink:0;z-index:100}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.header h1{font-size:15px;font-weight:700}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.period-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.2);color:rgba(255,255,255,.9);white-space:nowrap}
+.save-ind{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;text-align:right}
+.btn-sm{height:26px;padding:0 10px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.85);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-sm:hover{background:rgba(255,255,255,.15)}
+
+/* Action bar */
+.action-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:6px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.btn-match{height:28px;padding:0 11px;border-radius:6px;border:1.5px solid var(--green);background:var(--green-light);color:var(--green);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-all{height:28px;padding:0 11px;border-radius:6px;border:1.5px solid var(--blue);background:var(--blue-light);color:var(--blue);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit}
+.src-links{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.src-btn{font-size:11px;color:var(--blue);padding:2px 7px;border-radius:4px;border:1px solid var(--blue-light);background:var(--blue-light);white-space:nowrap;cursor:pointer;font-family:inherit}
+
+/* Main layout: left nav + right content (桌面) */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* Left nav（桌面顯示） */
+.left-nav{width:88px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.floor-group{border-bottom:1px solid var(--border)}
+.floor-header{padding:6px 8px 4px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:white;display:flex;align-items:center;gap:4px;position:sticky;top:0;z-index:2}
+.floor-1f .floor-header{background:var(--floor1)}
+.floor-b1 .floor-header{background:var(--floorb1)}
+.floor-cart .floor-header{background:#555}
+.floor-sale .floor-header{background:var(--sale)}
+.nav-item{padding:7px 8px;font-size:12px;cursor:pointer;color:var(--text2);border-left:3px solid transparent;transition:all .12s;line-height:1.3;display:flex;flex-direction:column;gap:1px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--green);border-left-color:var(--green);font-weight:500}
+.nav-item.active-sale{color:var(--sale);border-left-color:var(--sale)}
+.nav-item.active-cart{color:#555;border-left-color:#555}
+.nav-badge{font-size:9px;font-weight:700;background:var(--red);color:white;border-radius:8px;padding:0 4px;align-self:flex-start}
+.nav-badge.sale-badge{background:var(--sale)}
+
+/* 手機底部 tab bar */
+.mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.mobile-tabs-inner{display:flex;min-width:max-content}
+.mobile-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 12px 8px;min-width:60px;cursor:pointer;color:var(--text3);font-size:10px;gap:2px;border-top:2px solid transparent;position:relative;font-family:inherit;background:none;border-left:none;border-right:none;border-bottom:none;white-space:nowrap;transition:color .12s}
+.mobile-tab.active{color:var(--green);border-top-color:var(--green)}
+.mobile-tab.active-cart{color:#555;border-top-color:#555}
+.mobile-tab.active-sale{color:var(--sale);border-top-color:var(--sale)}
+.mobile-tab-icon{font-size:18px;line-height:1}
+.mobile-tab-label{font-size:9px;font-weight:500}
+.mobile-tab-badge{position:absolute;top:4px;right:6px;background:var(--red);color:white;font-size:9px;font-weight:700;border-radius:10px;padding:0 4px;min-width:14px;text-align:center}
+.mobile-tab-badge.sale{background:var(--sale)}
+
+/* 手機版右側內容底部 padding 要更大（留給 tab bar） */
+@media(max-width:600px){
+  .left-nav{display:none}
+  .mobile-tabs{display:block}
+  .right-panel{padding-bottom:110px}
+  .summary-bar{bottom:52px}
+  body{overflow:hidden}
+}
+
+/* Right content */
+.right-panel{flex:1;overflow-y:auto;padding:10px 12px 80px;-webkit-overflow-scrolling:touch}
+.panel-header{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.floor-pill{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;color:white}
+.pill-1f{background:var(--floor1)}
+.pill-b1{background:var(--floorb1)}
+.pill-sale{background:var(--sale)}
+.pill-cart{background:#555}
+
+.section-label{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--text3);text-transform:uppercase;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.freq-tag{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:500;letter-spacing:0}
+.freq-high{background:var(--red-light);color:var(--red)}
+.freq-low{background:var(--surface2);color:var(--text3)}
+.hint{font-size:11px;color:var(--text3);padding:5px 9px;margin-bottom:6px;background:var(--surface2);border-radius:6px;border-left:2px solid var(--border)}
+
+/* Item rows */
+.item-row{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;margin-bottom:2px;cursor:pointer;transition:background .1s;position:relative}
+.item-row:hover{background:var(--surface2)}
+.item-row:hover .del-btn,.item-row:hover .item-link{opacity:1}
+.item-row.in-cart{background:var(--green-light)}
+.item-row.is-match{border-left:2px solid var(--green);padding-left:6px}
+.cb{width:16px;height:16px;flex-shrink:0;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cb.done{background:var(--green);border-color:var(--green)}
+.cb svg{width:9px;height:9px}
+.storage-icon{font-size:11px;flex-shrink:0}
+.item-name{font-size:13px;flex:1;line-height:1.35}
+.item-link{opacity:0;flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:4px;color:var(--blue);font-size:12px;background:transparent;border:none;cursor:pointer;font-family:inherit;padding:0;transition:opacity .15s}
+.item-link:hover{background:var(--blue-light)}
+.item-meta{font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.tag{font-size:10px;padding:1px 5px;border-radius:4px;flex-shrink:0;white-space:nowrap;font-weight:500}
+.tag-urgent{background:var(--red-light);color:var(--red)}
+.tag-ok{background:var(--green-light);color:var(--green)}
+.tag-watch{background:var(--amber-light);color:var(--amber)}
+.tag-none{background:var(--surface2);color:var(--text3)}
+.tag-sale{background:var(--sale-light);color:var(--sale)}
+.tag-match{background:var(--green-light);color:var(--green)}
+.price-info{font-size:11px;color:var(--sale);white-space:nowrap;flex-shrink:0;font-weight:500}
+.orig-price{font-size:10px;color:var(--text3);text-decoration:line-through;white-space:nowrap;flex-shrink:0}
+.save-tag{font-size:10px;color:var(--red);white-space:nowrap;flex-shrink:0;font-weight:500}
+.counter{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.counter button{width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1}
+.counter span{font-size:12px;font-weight:500;min-width:16px;text-align:center}
+.del-btn{opacity:0;width:18px;height:18px;border-radius:4px;border:none;background:transparent;color:var(--red);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;font-family:inherit}
+.del-btn:hover{background:var(--red-light)}
+.rename-btn{opacity:0;width:18px;height:18px;border-radius:4px;border:none;background:transparent;color:var(--text3);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;font-family:inherit}
+.rename-btn:hover{background:var(--surface2);color:var(--text)}
+.item-row:hover .rename-btn{opacity:1}
+.item-name-input{font-size:13px;flex:1;border:none;border-bottom:1.5px solid var(--green);background:transparent;color:var(--text);font-family:inherit;outline:none;padding:0;line-height:1.35}
+
+/* Add row */
+.add-row{display:flex;gap:6px;margin-top:10px}
+.add-row input{flex:1;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;padding:0 9px;font-family:inherit;outline:none}
+.add-row input:focus{border-color:var(--green)}
+.add-row button{height:32px;padding:0 11px;border-radius:7px;border:1px solid var(--green);background:var(--green-light);color:var(--green);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+
+/* Cart items */
+.cart-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;margin-bottom:3px;background:var(--surface);border:1px solid var(--border)}
+.cart-item.done-item{background:var(--green-light);border-color:#b7dfca}
+.cart-cb{width:16px;height:16px;flex-shrink:0;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.cart-cb.done{background:var(--green);border-color:var(--green)}
+.cart-name{font-size:13px;flex:1;line-height:1.35}
+.cart-name.done{text-decoration:line-through;color:var(--text3)}
+.remove-btn{font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;white-space:nowrap;font-family:inherit}
+.remove-btn:hover{color:var(--red);border-color:var(--red)}
+
+/* Quick add */
+.quick-add-wrap{margin-top:14px;padding:10px;border-radius:8px;background:var(--surface);border:1px solid var(--border)}
+.quick-add-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.quick-add-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.quick-add-row input[type=text]{flex:1;min-width:130px;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;padding:0 9px;font-family:inherit;outline:none}
+.quick-add-row input[type=text]:focus{border-color:var(--green);background:var(--surface)}
+.quick-add-row select{height:32px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;padding:0 5px;font-family:inherit;cursor:pointer}
+.quick-add-row input[type=number]{height:32px;width:52px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;padding:0 6px;font-family:inherit;text-align:center}
+.quick-add-btn{height:32px;padding:0 12px;border-radius:7px;border:1.5px solid var(--green);background:var(--green-light);color:var(--green);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+/* Summary bar */
+.summary-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:99}
+.summary-text{font-size:13px;color:var(--text2)}
+.summary-text strong{color:var(--text)}
+.summary-btns{display:flex;gap:6px}
+.checkout-btn{font-size:12px;padding:5px 13px;border-radius:6px;border:1.5px solid var(--green);background:var(--green);color:white;cursor:pointer;font-family:inherit;font-weight:500}
+.checkout-btn:hover{background:#245c43}
+.clear-btn{font-size:12px;padding:5px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit}
+.clear-btn:hover{color:var(--red);border-color:var(--red)}
+
+/* Modals */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;padding:20px;width:90%;max-width:420px;max-height:85vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.modal p{font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6}
+.modal textarea{width:100%;height:110px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:11px;padding:8px;font-family:monospace;resize:vertical;outline:none}
+.modal-btns{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.btn-primary{flex:1;height:33px;border-radius:7px;border:1.5px solid var(--green);background:var(--green-light);color:var(--green);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-secondary{flex:1;height:33px;border-radius:7px;border:1.5px solid var(--blue);background:var(--blue-light);color:var(--blue);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-close-modal{height:33px;padding:0 13px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit}
+.modal-msg{font-size:12px;margin-top:7px;padding:6px 9px;border-radius:6px;display:none}
+.modal-msg.ok{background:var(--green-light);color:var(--green);display:block}
+.modal-msg.err{background:var(--red-light);color:var(--red);display:block}
+.checkout-detail{font-size:12px;color:var(--text2);max-height:180px;overflow-y:auto;margin-bottom:8px;line-height:1.9}
+.empty{text-align:center;padding:28px 12px;font-size:13px;color:var(--text3);line-height:2}
+
+/* 商品圖片 */
+.item-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);cursor:pointer;transition:transform .15s}
+.item-thumb:hover{transform:scale(1.08)}
+.item-thumb-placeholder{width:36px;height:36px;border-radius:6px;flex-shrink:0;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;color:var(--text3);background:var(--surface2);transition:all .15s;opacity:0}
+.item-row:hover .item-thumb-placeholder{opacity:1}
+.item-thumb-placeholder:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
+
+/* 圖片 Modal */
+.img-modal{background:var(--surface);border-radius:12px;padding:16px;width:90%;max-width:380px}
+.img-modal h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)}
+.img-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;display:none}
+.img-preview.show{display:block}
+.img-upload-area{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;margin-bottom:8px;transition:all .15s;position:relative}
+.img-upload-area:hover{border-color:var(--green);background:var(--green-light)}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-area p{font-size:13px;color:var(--text3);pointer-events:none}
+.img-url-row{display:flex;gap:6px;margin-bottom:8px}
+.img-url-row input{flex:1;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;padding:0 8px;font-family:inherit;outline:none}
+.img-url-row input:focus{border-color:var(--green)}
+.img-url-row button{height:32px;padding:0 10px;border-radius:7px;border:1px solid var(--blue);background:var(--blue-light);color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.img-btns{display:flex;gap:6px;flex-wrap:wrap}
+.img-btn-save{flex:1;height:32px;border-radius:7px;border:1.5px solid var(--green);background:var(--green-light);color:var(--green);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.img-btn-del{height:32px;padding:0 10px;border-radius:7px;border:1px solid var(--red-light);background:var(--red-light);color:var(--red);font-size:12px;cursor:pointer;font-family:inherit}
+.img-btn-close{height:32px;padding:0 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit}
+.img-msg{font-size:11px;margin-top:6px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <h1>🛒 Costco 新莊採購清單</h1>
+    <div class="header-right">
+      <button class="btn-sm" onclick="openSalesModal()">🏷 更新特惠</button>
+      <button class="btn-sm" onclick="openSyncModal()">↕ 匯出/匯入</button>
+      <span class="period-tag" id="period-badge">春季特惠 3/16–4/12</span>
+    </div>
+  </div>
+  <div class="save-ind" id="save-ind">載入中…</div>
+</div>
+
+<div class="action-bar">
+  <label style="font-size:12px;color:var(--text2);white-space:nowrap">📅 到訪日期</label>
+  <input type="date" id="visit-date" value="2026-04-07" style="height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;padding:0 7px;font-family:inherit;outline:none"/>
+  <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+  <button class="btn-match" onclick="loadMatchOnly()">✓ 我的清單有特惠</button>
+  <button class="btn-all" onclick="loadAllSales()">↓ 本期全部特惠</button>
+  <div class="src-links">
+    <button class="src-btn" onclick="openUrl('https://www.costco.com.tw/savings',event)">官網特惠</button>
+    <button class="src-btn" onclick="openUrl('https://www.daybuy.tw/costco/promotions/',event)">今購百科</button>
+    <button class="src-btn" onclick="openUrl('https://www.daybuy.tw/costco/hypermarket-news/',event)">賣場目擊</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="left-nav" id="left-nav"></div>
+  <div class="right-panel" id="right-panel"></div>
+</div>
+
+<!-- 手機底部 tab bar -->
+<div class="mobile-tabs" id="mobile-tabs">
+  <div class="mobile-tabs-inner" id="mobile-tabs-inner"></div>
+</div>
+
+<div class="summary-bar">
+  <span class="summary-text">購物車 <strong id="cart-count">0</strong> 項 · 本頁 <strong id="page-total">0</strong> 項</span>
+  <div class="summary-btns">
+    <button class="checkout-btn" id="checkout-btn" onclick="checkout()" style="display:none">✅ 結帳完成</button>
+    <button class="clear-btn" id="clear-btn" onclick="clearCart()" style="display:none">清空</button>
+  </div>
+</div>
+
+<!-- 圖片 Modal -->
+<div class="modal-overlay" id="img-modal" onclick="if(event.target===this)closeImgModal()">
+  <div class="img-modal" onclick="event.stopPropagation()">
+    <h3 id="img-modal-title">商品圖片</h3>
+    <img id="img-preview" class="img-preview" alt="商品圖片"/>
+    <div class="img-upload-area" title="點擊或拖曳截圖上傳">
+      <input type="file" id="img-file-input" accept="image/*" onchange="handleFileUpload(event)"/>
+      <p>📷 點擊上傳截圖<br><span style="font-size:11px">或從相簿選取（支援 JPG/PNG）</span></p>
+    </div>
+    <div class="img-url-row">
+      <input type="text" id="img-url-input" placeholder="或貼上圖片網址（https://...）"/>
+      <button onclick="previewFromUrl()">預覽</button>
+    </div>
+    <div class="img-msg" id="img-msg"></div>
+    <div class="img-btns">
+      <button class="img-btn-save" onclick="saveItemImg()">💾 儲存圖片</button>
+      <button class="img-btn-del" id="img-btn-del" onclick="deleteItemImg()" style="display:none">🗑 刪除</button>
+      <button class="img-btn-close" onclick="closeImgModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 特惠更新 Modal -->
+<div class="modal-overlay" id="sales-modal" onclick="if(event.target===this)closeSalesModal()">
+  <div class="modal">
+    <h3>🏷 更新特惠資料</h3>
+    <p>每期換新活動時，把我（Claude）產生的特惠 JSON 貼在下方，即可更新工具裡的特惠資料，不需要重新下載整個檔案。</p>
+    <p style="margin-top:4px">📋 使用方式：把 Costco 官網特惠 PDF 傳給 Claude → 請 Claude 產生「特惠 JSON」→ 複製 → 貼在下方 → 按「匯入特惠」</p>
+    <textarea id="sales-ta" placeholder='貼上 Claude 產生的特惠 JSON，格式如下：
+{
+  "period": "夏季特惠 2026/05/01–06/15",
+  "startDate": "2026-05-01",
+  "endDate": "2026-06-15",
+  "items": [
+    {"n":"商品名稱","orig":"原價","sale":"特價","save":"折扣","match":true,"itemNo":"12345"}
+  ]
+}' spellcheck="false" style="height:160px"></textarea>
+    <div class="modal-msg" id="sales-msg"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="doImportSales()">📥 匯入特惠</button>
+      <button class="btn-secondary" onclick="doExportSalesTemplate()">📤 產生格式範本</button>
+      <button class="btn-close-modal" onclick="closeSalesModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 匯出/匯入 Modal -->
+<div class="modal-overlay" id="sync-modal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="modal">
+    <h3>↕ 資料同步</h3>
+    <!-- Gist 同步區 -->
+    <div style="background:var(--green-light);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px">☁️ GitHub Gist 自動同步（推薦）</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.6">跨裝置自動同步。推送後在任何裝置拉取即可取得最新資料。</div>
+      <!-- Token 設定 -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+        <input id="token-input" type="password" placeholder="GitHub Token（ghp_開頭）" style="flex:1;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;padding:0 8px;font-family:inherit;outline:none"/>
+        <button onclick="saveToken()" style="height:30px;padding:0 10px;border-radius:6px;border:1px solid var(--green);background:var(--green-light);color:var(--green);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">儲存</button>
+      </div>
+      <div id="token-status" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="gistPush()" id="btn-gist-push">☁️ 推送到雲端</button>
+        <button class="btn-secondary" onclick="gistPull()" id="btn-gist-pull">⬇️ 從雲端拉取</button>
+      </div>
+      <div class="modal-msg" id="gist-msg"></div>
+    </div>
+    <!-- 手動匯出匯入區 -->
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">📋 手動匯出 / 匯入</div>
+    <textarea id="sync-ta" placeholder="匯出資料會顯示在這裡，或貼上要匯入的資料…" spellcheck="false"></textarea>
+    <div class="modal-msg" id="sync-msg"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="doExport()">📤 匯出</button>
+      <button class="btn-secondary" onclick="doImport()">📥 匯入（覆蓋）</button>
+      <button class="btn-close-modal" onclick="closeSyncModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 結帳確認 Modal -->
+<div class="modal-overlay" id="checkout-modal" onclick="if(event.target===this)closeCheckoutModal()">
+  <div class="modal">
+    <h3>✅ 結帳完成確認</h3>
+    <p id="checkout-summary"></p>
+    <div class="checkout-detail" id="checkout-detail"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="confirmCheckout()">確認完成，更新紀錄</button>
+      <button class="btn-close-modal" onclick="closeCheckoutModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage 雙模式 ───────────────────────────────────────
+const USE_CLOUD=(typeof window.storage!=='undefined');
+async function storeSave(k,v){const s=JSON.stringify(v);if(USE_CLOUD){try{await window.storage.set(k,s);}catch(e){}}else{try{localStorage.setItem(k,s);}catch(e){}}}
+async function storeLoad(k){if(USE_CLOUD){try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}catch(e){return null;}}else{try{const r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}}
+
+// 圖片獨立儲存（key: "img:tabKey§sec§idx"）
+async function imgSave(k,v){
+  if(USE_CLOUD){try{await window.storage.set("img:"+k,v);}catch(e){}}
+  else{try{localStorage.setItem("img:"+k,v);}catch(e){}}
+}
+async function imgLoad(k){
+  if(USE_CLOUD){try{const r=await window.storage.get("img:"+k);return r?r.value:null;}catch(e){return null;}}
+  else{try{return localStorage.getItem("img:"+k)||null;}catch(e){return null;}}
+}
+async function imgDelete(k){
+  if(USE_CLOUD){try{await window.storage.delete("img:"+k);}catch(e){}}
+  else{try{localStorage.removeItem("img:"+k);}catch(e){}}
+}
+
+// 壓縮圖片（控制在 200KB 以內）
+function compressImage(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement("canvas");
+      const MAX=400;
+      let w=img.width,h=img.height;
+      if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}
+      else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      cb(canvas.toDataURL("image/jpeg",0.75));
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── 連結 ─────────────────────────────────────────────────
+function itemLink(item){
+  if(item?.u)return item.u;
+  if(item?.itemNo)return`https://www.costco.com.tw/p/${item.itemNo}`;
+  const q=encodeURIComponent(String(item?.n||"").replace(/（[^）]*）/g,"").trim().slice(0,30));
+  return`https://www.costco.com.tw/search?q=${q}`;
+}
+function itemUrl(itemNo,name){return itemLink({itemNo,n:name});}
+function openUrl(url,e){if(e){e.stopPropagation();e.preventDefault();}try{openLink(url);}catch(_){try{window.open(url,"_blank");}catch(__){window.location.href=url;}}}
+function storageIcon(s){return s==="frozen"?"❄️":s==="chilled"?"🧊":"";}
+function chk(){return`<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>`;}
+
+// ── 樓層 + 分類結構 ──────────────────────────────────────
+// 新莊店：1F 非食品 → B1 食品（結帳也在B1）
+const FLOORS=[
+  {
+    id:"fcart",label:"🛒",desc:"購物車",cls:"floor-cart",pill:"pill-cart",
+    cats:[{key:"cart",label:"購物車"}]
+  },
+  {
+    id:"fsale",label:"🏷",desc:"特惠",cls:"floor-sale",pill:"pill-sale",
+    cats:[{key:"sales",label:"本期特惠"}]
+  },
+  {
+    id:"f1",label:"1F",desc:"非食品",cls:"floor-1f",pill:"pill-1f",
+    cats:[
+      {key:"household",label:"🧴 日用品"},
+      {key:"care",     label:"🧺 個人護理"},
+      {key:"health",   label:"💊 保健/營養"},
+      {key:"tech",     label:"💻 3C / 家電"},
+      {key:"apparel",  label:"👕 服飾"},
+      {key:"custom",   label:"＋ 自訂"},
+    ]
+  },
+  {
+    id:"fb1",label:"B1",desc:"食品",cls:"floor-b1",pill:"pill-b1",
+    cats:[
+      {key:"protein",  label:"🥩 肉品/海鮮"},
+      {key:"veg",      label:"🥦 蔬果"},
+      {key:"dairy",    label:"🥛 乳品"},
+      {key:"drinks",   label:"🥤 飲品"},
+      {key:"pantry",   label:"🍚 主食/調味"},
+      {key:"snack",    label:"🍿 零食囤貨"},
+      {key:"readymeal",label:"🍱 即食熟食"},
+      {key:"bakery",   label:"🥐 烘焙"},
+    ]
+  },
+];
+
+// 所有 cat key（不含 cart/sales）
+const ALL_CAT_KEYS=FLOORS.flatMap(f=>f.cats.map(c=>c.key)).filter(k=>k!=="cart"&&k!=="sales");
+
+// ── 本期特惠 ─────────────────────────────────────────────
+const SALES_DATA=[
+  {n:"益活雞 冷藏清雞胸（大成）",          orig:"339/公斤",sale:"269/公斤",save:"-70/公斤",match:true, itemNo:"153566"},
+  {n:"去骨雞腿排（大成）",                 orig:"399/公斤",sale:"319/公斤",save:"-80/公斤",match:true, itemNo:"149292"},
+  {n:"農心 拉麵組合 部隊鍋×4+辛拉麵黑×4", orig:"369",     sale:"289",     save:"-80",     match:true, itemNo:"115014"},
+  {n:"KENJI 健司 金黃起司餅乾 45入",       orig:"359",     sale:"285",     save:"-74",     match:true, itemNo:"81989"},
+  {n:"ALPHAMIC 食物烹調專用紙 ×2",         orig:"339",     sale:"249",     save:"-90",     match:true, itemNo:"111887"},
+  {n:"BREF 妙力 懸掛式馬桶清潔球 ×6組",   orig:"699",     sale:"559",     save:"-140",    match:true, itemNo:"334160"},
+  {n:"KLEENEX 舒潔 三層抽取衛生紙 ×24入", orig:"419",     sale:"335",     save:"-84",     match:true, itemNo:"183928"},
+  {n:"KLEENEX 舒潔 濕式衛生紙 ×14入",    orig:"599",     sale:"479",     save:"-120",    match:true, itemNo:"126097"},
+  {n:"MAY FLOWER 五月花 廚房紙巾 ×12入",  orig:"419",     sale:"335",     save:"-84",     match:true, itemNo:"139289"},
+  {n:"PERSIL 寶瀅 全效能洗衣凝露 4L",     orig:"699",     sale:"539",     save:"-160",    match:true, itemNo:"493577"},
+  {n:"PARODONTAX 牙周適 牙膏 120g×4",    orig:"625",     sale:"495",     save:"-130",    match:true, itemNo:"139237"},
+  {n:"AROMASE 艾瑪絲 控油洗髮精 1000ml",  orig:"665",     sale:"525",     save:"-140",    match:true, itemNo:"156490"},
+  {n:"BEAUTE CLAIRE 山茶花潔顏油 500ml×2",orig:"855",    sale:"675",     save:"-180",    match:true, itemNo:"89450"},
+  {n:"WHISPER 好自在 衛生棉",             orig:"349",     sale:"259",     save:"-90",     match:true, itemNo:"115671"},
+  {n:"科克蘭 美國頂級紐約客牛排",          orig:"—",       sale:"省340/公斤",save:"",      match:false,itemNo:"56024"},
+  {n:"冷凍智利草莓 1.5kg",                 orig:"339",     sale:"269",     save:"-70",     match:false,itemNo:"866581"},
+  {n:"BIBIGO 冷凍蝦煎餃 600g",             orig:"389",     sale:"309",     save:"-80",     match:false,itemNo:"151411"},
+  {n:"老協珍 冷凍壽喜燒豬肉米漢堡 ×10個", orig:"499",     sale:"399",     save:"-100",    match:false,itemNo:"118352"},
+  {n:"YAKULT 養樂多 300 ×40瓶",            orig:"299",     sale:"239",     save:"-60",     match:false,itemNo:"83598"},
+  {n:"QUAKER 桂格 減糖黑十穀 50入",        orig:"349",     sale:"279",     save:"-70",     match:false,itemNo:"184592"},
+  {n:"KOH 純椰子水 250ml×24瓶",            orig:"439",     sale:"349",     save:"-90",     match:false,itemNo:"154461"},
+  {n:"GRANOLA HOUSE 綜合纖脆燕麥棒 24條", orig:"399",     sale:"319",     save:"-80",     match:false,itemNo:"116453"},
+  {n:"OREO 迷你巧克力夾心餅乾分享組",     orig:"339",     sale:"259",     save:"-80",     match:false,itemNo:"226450"},
+  {n:"NESTLE 雀巢 奇巧迷你威化巧克力×60", orig:"579",     sale:"449",     save:"-130",    match:false,itemNo:"89591"},
+  {n:"SHJ 盛香珍 蒜片青豆 760g",           orig:"239",     sale:"189",     save:"-50",     match:false,itemNo:"106657"},
+  {n:"OCEAN SPRAY 全果蔓越莓乾 1.36kg",   orig:"369",     sale:"289",     save:"-80",     match:false,itemNo:"620856"},
+  {n:"TWININGS 伯爵茶/英倫早餐茶 100包",  orig:"649",     sale:"509",     save:"-140",    match:false,itemNo:"92472"},
+  {n:"DARLING 三合一白咖啡 80包",          orig:"639",     sale:"509",     save:"-130",    match:false,itemNo:"174199"},
+  {n:"UCC 職人精選濾掛式咖啡 75包",        orig:"699",     sale:"555",     save:"-144",    match:false,itemNo:"398703"},
+  {n:"ALPECIN 咖啡因洗髮露 900ml",         orig:"695",     sale:"545",     save:"-150",    match:false,itemNo:"240887"},
+  {n:"NEUTROGENA 露得清 沐浴露 1182ml",    orig:"529",     sale:"389",     save:"-140",    match:false,itemNo:"514510"},
+  {n:"LISTERINE 李施德霖 無酒精漱口水×4", orig:"529",     sale:"399",     save:"-130",    match:false,itemNo:"155405"},
+  {n:"CLAYGE 海泥毛孔淨透洗面乳 ×2條",   orig:"549",     sale:"429",     save:"-120",    match:false,itemNo:"128413"},
+  {n:"CALTRATE 挺立 關鍵迷你錠 90錠",     orig:"1799",    sale:"1439",    save:"-360",    match:false,itemNo:"127189"},
+  {n:"WEIDER 威德 納豆紅麴 120粒",         orig:"1049",    sale:"839",     save:"-210",    match:false,itemNo:"994805"},
+  {n:"WEIDER 威德 一日補給+ 30包",         orig:"959",     sale:"759",     save:"-200",    match:false,itemNo:"217618"},
+  {n:"WEIDER 威德 維生素K2+D3 120粒",      orig:"489",     sale:"389",     save:"-100",    match:false,itemNo:"144635"},
+  {n:"WEIDER 威德 膠原蛋白粉 450g",        orig:"699",     sale:"559",     save:"-140",    match:false,itemNo:"554777"},
+  {n:"YOUTH LIGHT 優識立 葉黃素 130粒",   orig:"979",     sale:"779",     save:"-200",    match:false,itemNo:"998437"},
+  {n:"SCOTT 萬用超強吸力紙抹布 10捲",     orig:"749",     sale:"599",     save:"-150",    match:false,itemNo:"1509965"},
+  {n:"GORILLA RACK 五層強化倉儲架",        orig:"5999",    sale:"4599",    save:"-1400",   match:false,itemNo:"1600209"},
+  {n:"PHILIPS 飛利浦 寵物抗敏空氣清淨機", orig:"11899",   sale:"8899",    save:"-3000",   match:false,itemNo:"155617"},
+  {n:"BOSCH 60公分獨立式洗碗機",           orig:"33999",   sale:"27199",   save:"-6800",   match:false,itemNo:"143549"},
+  {n:"TEFAL 法國特福 陶瓷不沾深煎鍋 24cm",orig:"2149",    sale:"1699",    save:"-450",    match:false,itemNo:"145252"},
+  {n:"STAUB 雙耳圓形鑄鐵深湯鍋 24cm",     orig:"5899",    sale:"4599",    save:"-1300",   match:false,itemNo:"154405"},
+  {n:"WATERPIK 多功能沖牙機雙機組",        orig:"3369",    sale:"2679",    save:"-690",    match:false,itemNo:"144642"},
+  {n:"PHILIPS 飛利浦 55吋 4K 顯示器",     orig:"13699",   sale:"10959",   save:"-2740",   match:false,itemNo:"153519"},
+  {n:"SAMSUNG 85吋 4K 顯示器",             orig:"75999",   sale:"59999",   save:"-16000",  match:false,itemNo:"153748"},
+  {n:"IGLOO 156公升商用冰桶",              orig:"3899",    sale:"2999",    save:"-900",    match:false,itemNo:"1819524"},
+  {n:"ALCON 愛爾康 日拋隱形眼鏡 買2盒省650",orig:"—",     sale:"省650",   save:"",        match:false,itemNo:""},
+  {n:"MICHELIN 米其林輪胎安裝優惠",        orig:"—",       sale:"省600–1800",save:"",      match:false,itemNo:""},
+];
+
+// ── 預設採購清單 ─────────────────────────────────────────
+const DEFAULT_DATA={
+  // 1F 非食品
+  household:{sections:{
+    "衛生紙類":[
+      {n:"科克蘭 三層抽取衛生紙 120抽×72入",last:"2026-03-18",cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%A7%91%E5%85%8B%E8%98%AD+%E8%A1%9B%E7%94%9F%E7%B4%99"},
+      {n:"舒潔 三層抽取式衛生紙 100抽×24入",last:"2026-03-18",cycle:45,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%88%92%E6%BD%94+%E4%B8%89%E5%B1%A4%E8%A1%9B%E7%94%9F%E7%B4%99"},
+      {n:"舒潔 濕式衛生紙 46張×14入",      last:"2026-03-18",cycle:45,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/Food-Dining/Frozen-Fresh-Food/Frozen-Seafood-Meat/Kleenex-Flushable-Wipes-46-Sheet-X-14-Pack/p/126097"},
+      {n:"五月花 三層廚房紙巾 80抽×12入",  last:"2026-03-18",cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E4%BA%94%E6%9C%88%E8%8A%B1+%E5%BB%9A%E6%88%BF%E7%B4%99%E5%B7%BE"},
+      {n:"Alphamic 食物烹調專用紙 30cm×50m×2",last:"2026-03-18",cycle:45,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=Alphamic+%E9%A3%9F%E7%89%A9%E7%83%B9%E8%AA%BF"},
+    ],
+    "廚房消耗品":[
+      {n:"保鮮膜",                          last:null,        cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E4%BF%9D%E9%AE%AE%E8%86%9C"},
+      {n:"影印紙",                          last:"2026-01-20",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E5%BD%B1%E5%8D%B0%E7%B4%99"},
+    ],
+    "清潔用品":[
+      {n:"妙力 懸掛式馬桶清潔球 ×6組",     last:"2026-03-18",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E5%A6%99%E5%8A%9B+%E9%A6%AC%E6%A1%B6%E6%B8%85%E6%BD%94%E7%90%83"},
+      {n:"Ariel 抗臭洗衣精補充包 1100g×6入",last:null,       cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=Ariel+%E6%B4%97%E8%A1%A3%E7%B2%BE"},
+      {n:"美則浴室每日清潔劑",              last:"2025-08-08",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%BE%8E%E5%89%87+%E6%B5%B4%E5%AE%A4%E6%B8%85%E6%BD%94"},
+      {n:"Method shower spray",             last:null,        cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=Method+shower+spray"},
+    ],
+    "收納/其他":[
+      {n:"收納箱",                          last:null,        cycle:365,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E6%94%B6%E7%B4%8D%E7%AE%B1"},
+      {n:"收納盒",                          last:null,        cycle:365,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E6%94%B6%E7%B4%8D%E7%9B%92"},
+      {n:"瓦斯瓶",                          last:null,        cycle:60, freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%93%A6%E6%96%AF%E7%93%B6"},
+    ],
+  }},
+  care:{sections:{
+    "口腔":[
+      {n:"Red Seal 紅印蜂膠牙膏",           last:null,        cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=Red+Seal+%E8%9C%82%E8%86%A0%E7%89%99%E8%86%8F"},
+      {n:"牙周適 牙齦護理牙膏 120g×4入",   last:null,        cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%89%99%E5%91%A8%E9%81%A9+%E7%89%99%E8%86%8F"},
+    ],
+    "洗髮":[
+      {n:"PANTENE 植萃玫瑰蜂蜜系列",       last:"2025-11-14",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=PANTENE+%E7%8E%AB%E7%91%B0%E8%9C%82%E8%9C%9C"},
+      {n:"SHL BY SAHOLEA 森歐黎漾洗髮露",  last:null,        cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=SAHOLEA+%E6%B4%97%E9%AB%AE"},
+      {n:"TRESemme 深層清潔洗髮露 940ml×2",last:"2026-03-18",cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=TRESemme+%E6%B4%97%E9%AB%AE"},
+      {n:"艾瑪絲 青檸控油洗髮精 1000ml",   last:null,        cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%89%BE%E7%91%AA%E7%B5%B2+%E6%B4%97%E9%AB%AE%E7%B2%BE"},
+    ],
+    "沐浴/潔顏":[
+      {n:"PALMOLIVE 棕欖精粹保濕沐浴乳",   last:null,        cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=PALMOLIVE+%E6%B2%90%E6%B5%B4%E4%B9%B3"},
+      {n:"AQI SEA MINERALS 雅葵海洋微風沐浴乳",last:null,    cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=AQI+SEA+MINERALS"},
+      {n:"洗面乳",                          last:null,        cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E6%B4%97%E9%9D%A2%E4%B9%B3"},
+      {n:"Beaute Claire 山茶花潔顏油 500ml×2",last:null,     cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=Beaute+Claire"},
+    ],
+    "生理用品":[
+      {n:"衛生棉",                          last:null,        cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%A1%9B%E7%94%9F%E6%A3%89"},
+    ],
+  }},
+  health:{sections:{
+    "保健食品":[],
+  }},
+  tech:{sections:{
+    "3C / 家電":[
+      {n:"iPad",                            last:"2025-10-30",cycle:730,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=iPad"},
+      {n:"PANASONIC 充電器含電池組",        last:null,        cycle:365,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=PANASONIC+%E5%85%85%E9%9B%BB%E5%99%A8"},
+      {n:"MSI 27吋電腦螢幕 PRO MP271 E14A", last:null,        cycle:730,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=MSI+27%E5%90%8B%E8%9E%A2%E5%B9%95"},
+    ],
+  }},
+  apparel:{sections:{
+    "服飾":[],
+  }},
+  custom:{sections:{"自訂項目":[]}},
+  // B1 食品
+  protein:{sections:{
+    "海鮮":[
+      {n:"科克蘭 冷凍帶殼特大生蝦",        last:"2026-03-24",cycle:21,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/Food-Dining/Frozen-Fresh-Food/Frozen-Seafood-Meat/Kirkland-Signature-Frozen-Raw-Tail-On-Shrimp-2-LBs-908-g-31-40-Count-LB/p/7777000"},
+      {n:"冷凍岡山鮮凍牡蠣 850g",          last:null,        cycle:30,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E7%89%A1%E8%A0%A3"},
+      {n:"鮭魚排",                         last:null,        cycle:14,freq:"high",storage:"frozen", u:"https://www.costco.com.tw/Food-Dining/Frozen-Fresh-Food/Frozen-Seafood-Meat/Kirkland-Signature-Frozen-Atlantic-Salmon-136-kg/p/1286092"},
+      {n:"東晟 冷凍金目鱸魚排 1kg",        last:null,        cycle:30,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/Food-Dining/Frozen-Fresh-Food/Frozen-Seafood-Meat/TOSEI-SEAFOOD-Frozen-Golden-Sea-Bass-Fillets-1-kg/p/90768"},
+      {n:"蘆魚片",                         last:"2025-10-30",cycle:60,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E8%98%86%E9%AD%9A%E7%89%87"},
+    ],
+    "雞肉":[
+      {n:"台灣雞清胸肉真空包",             last:null,        cycle:14,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E5%8F%B0%E7%81%A3%E9%9B%9E%E6%B8%85%E8%83%B8%E8%82%89"},
+      {n:"益活雞 冷藏清雞胸",             last:"2026-03-18",cycle:21,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/Warehouse-Only/Food-Beverages/Seafood-Meat/Holy-Chicken-Boneless-Chicken-Breast/p/153566"},
+      {n:"去骨雞腿排",                     last:null,        cycle:14,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/Food-Dining/Frozen-Fresh-Food/Frozen-Seafood-Meat/Dachan-Holy-Chicken-Taiwan-Frozen-Chicken-Thigh-VP/p/149292"},
+      {n:"卜蜂 冷藏紅燒棒腿 1200g",       last:null,        cycle:21,freq:"low", storage:"chilled",u:"https://www.costco.com.tw/search?q=%E5%8D%9C%E8%9C%82+%E7%B4%85%E7%87%92%E6%A3%92%E8%85%BF"},
+    ],
+    "豬肉":[
+      {n:"台灣冷凍豬五花火鍋片",           last:null,        cycle:21,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E8%B1%AC%E4%BA%94%E8%8A%B1%E7%81%AB%E9%8D%8B%E7%89%87"},
+      {n:"豬絞肉",                         last:null,        cycle:14,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%B1%AC%E7%B5%9E%E8%82%89"},
+      {n:"西班牙伊比利豬梅花肉卷",         last:null,        cycle:45,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E4%BC%8A%E6%AF%94%E5%88%A9%E8%B1%AC%E6%A2%85%E8%8A%B1"},
+      {n:"台畜香蒜排骨酥",                 last:"2025-10-30",cycle:45,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E5%8F%B0%E7%95%9C+%E9%A6%99%E8%92%9C%E6%8E%92%E9%AA%A8%E9%85%A5"},
+    ],
+    "加工/冷凍":[
+      {n:"餃肉（水餃）",                   last:"2025-10-30",cycle:60,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E6%B0%B4%E9%A4%83"},
+    ],
+  }},
+  veg:{sections:{
+    "蔬菜（每週）":[
+      {n:"青江菜",                         last:"2026-03-24",cycle:7, freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E9%9D%92%E6%B1%9F%E8%8F%9C"},
+      {n:"黃秋葵",                         last:"2025-11-14",cycle:7, freq:"high",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E9%BB%83%E7%A7%8B%E8%91%B5"},
+      {n:"空運美國嫩葉菠菜",               last:"2025-11-25",cycle:7, freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%8F%A0%E8%8F%9C"},
+    ],
+    "根莖類":[
+      {n:"蕃薯",                           last:"2026-03-24",cycle:21,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%95%AA%E8%96%AF"},
+    ],
+    "水果":[
+      {n:"藍莓",                           last:"2026-02-06",cycle:10,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%97%8D%E8%8E%93"},
+      {n:"葡萄",                           last:"2026-02-06",cycle:10,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%91%A1%E8%90%84"},
+      {n:"芭樂",                           last:"2025-10-21",cycle:14,freq:"high",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%8A%AD%E6%A8%82"},
+    ],
+  }},
+  dairy:{sections:{
+    "鮮乳":[
+      {n:"鮮奶",                           last:"2026-03-24",cycle:7, freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E9%AE%AE%E5%A5%B6"},
+      {n:"義美全脂鮮乳",                   last:null,        cycle:7, freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E7%BE%A9%E7%BE%8E%E9%AE%AE%E4%B9%B3"},
+      {n:"豆奶",                           last:"2026-03-18",cycle:14,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%B1%86%E5%A5%B6"},
+    ],
+    "優格":[
+      {n:"簡單點 冷藏鮮奶優格 400g×6入",  last:"2026-03-24",cycle:14,freq:"high",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E7%B0%A1%E5%96%AE%E9%BB%9E+%E5%84%AA%E6%A0%BC"},
+    ],
+  }},
+  drinks:{sections:{
+    "機能飲品":[
+      {n:"科克蘭 有機蘋果醋",             last:null,        cycle:60,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%A7%91%E5%85%8B%E8%98%AD+%E8%98%8B%E6%9E%9C%E9%86%8B"},
+    ],
+  }},
+  pantry:{sections:{
+    "主食":[
+      {n:"米",                             last:"2026-03-18",cycle:28,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%B1%B3"},
+      {n:"義大利麵條",                     last:"2025-10-21",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%BE%A9%E5%A4%A7%E5%88%A9%E9%BA%B5"},
+    ],
+    "油/調味":[
+      {n:"橄欖油",                         last:"2025-10-30",cycle:90,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E6%A9%84%E6%AC%96%E6%B2%B9"},
+    ],
+  }},
+  snack:{sections:{
+    "堅果/零食":[
+      {n:"韓味不二 海苔酥 80g×4袋",       last:null,        cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E9%9F%93%E5%91%B3%E4%B8%8D%E4%BA%8C+%E6%B5%B7%E8%8B%94"},
+      {n:"綜合堅果",                       last:"2025-10-30",cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E7%B6%9C%E5%90%88%E5%A0%85%E6%9E%9C"},
+      {n:"肉鬆",                           last:null,        cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%82%89%E9%AC%86"},
+    ],
+    "餅乾/起司":[
+      {n:"芝司樂 冷藏原味高鈣起司球 150g×2",last:"2025-10-30",cycle:30,freq:"low",storage:"chilled",u:"https://www.costco.com.tw/search?q=%E8%8A%9D%E5%8F%B8%E6%A8%82+%E8%B5%B7%E5%8F%B8%E7%90%83"},
+      {n:"健司 金黃起司餅乾 28.5g×45入",  last:"2026-03-18",cycle:30,freq:"low", storage:"ambient",u:"https://www.costco.com.tw/Food-Dining/Snacks-Candy/Crackers-Chips/KENJI-Gold-Cheese-Crackers-285-g-X-45-Count/p/81989"},
+    ],
+    "麵食/拉麵":[
+      {n:"農心 拉麵組合（部隊鍋×4+辛拉麵黑×4）",last:null,cycle:45,freq:"low",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E8%BE%B2%E5%BF%83+%E9%83%A8%E9%9A%8A%E9%8D%8B%E9%BA%B5"},
+    ],
+  }},
+  readymeal:{sections:{
+    "冷凍即食":[
+      {n:"卜蜂 冷凍無骨香酥雞",           last:"2025-10-30",cycle:45,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E5%8D%9C%E8%9C%82+%E9%A6%99%E9%85%A5%E9%9B%9E"},
+      {n:"起司披薩",                       last:"2025-10-30",cycle:45,freq:"low", storage:"frozen", u:"https://www.costco.com.tw/search?q=%E8%B5%B7%E5%8F%B8%E6%8A%AB%E8%96%A9"},
+    ],
+  }},
+  bakery:{sections:{
+    "烘焙":[
+      {n:"餐包",                           last:"2025-11-25",cycle:14,freq:"high",storage:"ambient",u:"https://www.costco.com.tw/search?q=%E9%A4%90%E5%8C%85"},
+    ],
+  }},
+  sales:{sections:{"清單符合特惠":[],"其他特惠":[]}},
+};
+
+// ── State ────────────────────────────────────────────────
+let data=JSON.parse(JSON.stringify(DEFAULT_DATA));
+let cart={},bought={},salesLoaded=false;
+let activeKey="cart"; // 目前選中的 cat key
+let saveTimer=null;
+
+const NOW=new Date("2026-04-07");
+function daysAgo(d){if(!d)return null;return Math.round((NOW-new Date(d))/86400000);}
+function urgTag(item){
+  if(!item.last)return{cls:"tag-none",txt:"未記錄"};
+  const e=daysAgo(item.last);
+  if(e>=item.cycle*0.85)return{cls:"tag-urgent",txt:"需補貨"};
+  if(e>=item.cycle*0.6)return{cls:"tag-watch",txt:"留意"};
+  return{cls:"tag-ok",txt:"庫存足"};
+}
+function metaStr(last){if(!last)return"";return daysAgo(last)+"天前";}
+function idOf(tk,sec,i){return tk+"§"+sec+"§"+i;}
+
+// ── Persistence ──────────────────────────────────────────
+async function saveState(){
+  await storeSave("cco-data",data);await storeSave("cco-cart",cart);
+  await storeSave("cco-bought",bought);await storeSave("cco-sales",salesLoaded);
+  const t=new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("save-ind").textContent=(USE_CLOUD?"☁️":"💾")+" 已儲存 "+t;
+}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveState,800);}
+async function loadState(){
+  const d=await storeLoad("cco-data");if(d)data=d;
+  const c=await storeLoad("cco-cart");if(c)cart=c;
+  const b=await storeLoad("cco-bought");if(b)bought=b;
+  const s=await storeLoad("cco-sales");if(s)salesLoaded=s;
+  document.getElementById("save-ind").textContent=(d?"資料已載入":"首次使用")+" · "+(USE_CLOUD?"☁️ 雲端":"💾 本機");
+}
+
+// ── 圖片 Modal ───────────────────────────────────────────
+let imgCurrentId=null; // 目前正在編輯的品項 id
+let imgPendingData=null; // 暫存待儲存的圖片資料（base64 或 url）
+
+async function openImgModal(id,name,e){
+  e.stopPropagation();
+  imgCurrentId=id;
+  imgPendingData=null;
+  document.getElementById("img-modal-title").textContent="📷 "+name;
+  document.getElementById("img-url-input").value="";
+  document.getElementById("img-file-input").value="";
+  document.getElementById("img-msg").textContent="";
+  // 載入現有圖片
+  const existing=await imgLoad(id);
+  const preview=document.getElementById("img-preview");
+  const delBtn=document.getElementById("img-btn-del");
+  if(existing){
+    preview.src=existing;preview.classList.add("show");
+    imgPendingData=existing;
+    delBtn.style.display="inline-block";
+  } else {
+    preview.src="";preview.classList.remove("show");
+    delBtn.style.display="none";
+  }
+  document.getElementById("img-modal").classList.add("open");
+}
+function closeImgModal(){document.getElementById("img-modal").classList.remove("open");imgCurrentId=null;imgPendingData=null;}
+
+function handleFileUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith("image/")){document.getElementById("img-msg").textContent="❌ 請選擇圖片檔案";return;}
+  compressImage(file,data=>{
+    imgPendingData=data;
+    const preview=document.getElementById("img-preview");
+    preview.src=data;preview.classList.add("show");
+    const kb=Math.round(data.length*0.75/1024);
+    document.getElementById("img-msg").textContent=`✅ 已壓縮至約 ${kb}KB，按「儲存圖片」確認`;
+  });
+}
+
+function previewFromUrl(){
+  const url=document.getElementById("img-url-input").value.trim();
+  if(!url){document.getElementById("img-msg").textContent="❌ 請輸入圖片網址";return;}
+  const preview=document.getElementById("img-preview");
+  preview.src=url;preview.classList.add("show");
+  preview.onerror=()=>{document.getElementById("img-msg").textContent="❌ 圖片載入失敗，請確認網址正確";preview.classList.remove("show");};
+  preview.onload=()=>{imgPendingData=url;document.getElementById("img-msg").textContent="✅ 預覽成功，按「儲存圖片」確認";};
+}
+
+async function saveItemImg(){
+  if(!imgCurrentId||!imgPendingData){document.getElementById("img-msg").textContent="❌ 尚無圖片可儲存";return;}
+  await imgSave(imgCurrentId,imgPendingData);
+  document.getElementById("img-btn-del").style.display="inline-block";
+  document.getElementById("img-msg").textContent="✅ 圖片已儲存！";
+  // 更新頁面縮圖
+  const thumb=document.getElementById("thumb-"+imgCurrentId.replace(/[§]/g,"-"));
+  if(thumb){thumb.src=imgPendingData;thumb.style.display="block";thumb.nextSibling?.remove&&thumb.nextSibling.remove();}
+  // 重新 render 讓縮圖出現
+  renderPanel();
+  setTimeout(closeImgModal,800);
+}
+
+async function deleteItemImg(){
+  if(!imgCurrentId)return;
+  await imgDelete(imgCurrentId);
+  const preview=document.getElementById("img-preview");
+  preview.src="";preview.classList.remove("show");
+  document.getElementById("img-btn-del").style.display="none";
+  document.getElementById("img-msg").textContent="🗑 圖片已刪除";
+  imgPendingData=null;
+  renderPanel();
+}
+
+// ── Sales ─────────────────────────────────────────────────
+// 目前活躍特惠期間（可被 JSON 匯入覆蓋）
+let salesPeriod={label:"春季特惠 3/16–4/12",startDate:"2026-03-16",endDate:"2026-04-12"};
+let customSalesData=null; // null = 使用內建 SALES_DATA，否則用匯入的
+
+function getActiveSalesData(){return customSalesData||SALES_DATA;}
+
+// 取得到訪日期
+function getVisitDate(){
+  const v=document.getElementById("visit-date")?.value;
+  return v?new Date(v):new Date();
+}
+
+// 判斷特惠是否在到訪日期內有效
+function isSaleValid(){
+  const visit=getVisitDate();
+  const start=new Date(salesPeriod.startDate);
+  const end=new Date(salesPeriod.endDate);
+  end.setHours(23,59,59);
+  return visit>=start&&visit<=end;
+}
+
+// 更新 period badge 顯示（含有效性判斷）
+function updatePeriodBadge(){
+  const badge=document.getElementById("period-badge");
+  if(!badge)return;
+  const valid=isSaleValid();
+  badge.textContent=salesPeriod.label+(valid?"":" ⚠️已過期");
+  badge.style.background=valid?"rgba(255,255,255,.2)":"rgba(220,80,60,.5)";
+}
+
+// 到訪日期變更時重新判斷
+function onVisitDateChange(){
+  updatePeriodBadge();
+  if(!isSaleValid()&&salesLoaded){
+    const hasItems=Object.values(data.sales.sections).some(a=>a.length>0);
+    if(hasItems){
+      // 清除特惠分頁資料
+      data.sales.sections["清單符合特惠"]=[];
+      data.sales.sections["其他特惠"]=[];
+      salesLoaded=false;
+
+      // 同時清除購物車裡的特惠品項
+      let cartCleared=0;
+      Object.entries(data.sales.sections).forEach(([sec,items])=>{
+        items.forEach((_,i)=>{
+          const id=idOf("sales",sec,i);
+          if(cart[id]){delete cart[id];delete bought[id];cartCleared++;}
+        });
+      });
+      // 也掃一次購物車確保殘留的 sales§ 開頭 key 被清掉
+      Object.keys(cart).forEach(k=>{if(k.startsWith("sales§")){delete cart[k];delete bought[k];cartCleared++;}});
+
+      scheduleSave();
+      renderNav();
+      if(activeKey==="sales"||activeKey==="cart")renderPanel();
+      const ind=document.getElementById("save-ind");
+      ind.textContent=`⚠️ 特惠已過期，資料已清除${cartCleared?`（含 ${cartCleared} 項購物車品項）`:""}`;
+      setTimeout(()=>{ind.textContent=(USE_CLOUD?"☁️":"💾")+" 已儲存";},3500);
+    }
+  }
+}
+
+function buildSales(matchOnly){
+  if(!isSaleValid()){
+    alert(`到訪日期（${document.getElementById("visit-date")?.value}）不在特惠期間內（${salesPeriod.label}）。\n請更改到訪日期，或先更新特惠資料。`);
+    return;
+  }
+  const src=getActiveSalesData();
+  data.sales.sections["清單符合特惠"]=src.filter(s=>s.match).map(s=>({n:s.n,last:null,cycle:30,isSale:true,match:true,salePrice:s.sale,originalPrice:s.orig,saveAmt:s.save,itemNo:s.itemNo||""}));
+  data.sales.sections["其他特惠"]=matchOnly?[]:src.filter(s=>!s.match).map(s=>({n:s.n,last:null,cycle:30,isSale:true,match:false,salePrice:s.sale,originalPrice:s.orig,saveAmt:s.save,itemNo:s.itemNo||""}));
+  salesLoaded=true;scheduleSave();
+}
+function loadMatchOnly(){buildSales(true);if(salesLoaded)switchCat("sales");}
+function loadAllSales(){buildSales(false);if(salesLoaded)switchCat("sales");}
+
+// ── 特惠 JSON 匯入/匯出 ───────────────────────────────────
+function openSalesModal(){document.getElementById("sales-modal").classList.add("open");document.getElementById("sales-ta").value="";document.getElementById("sales-msg").className="modal-msg";}
+function closeSalesModal(){document.getElementById("sales-modal").classList.remove("open");}
+
+function doImportSales(){
+  const raw=document.getElementById("sales-ta").value.trim();
+  if(!raw){showSalesMsg("err","❌ 請先貼上特惠 JSON。");return;}
+  try{
+    const parsed=JSON.parse(raw);
+    if(!parsed.items||!Array.isArray(parsed.items)){showSalesMsg("err","❌ 格式不正確，需要有 items 陣列。");return;}
+
+    // 偵測購物車裡有多少「舊特惠」品項
+    const oldSaleCartItems=[];
+    Object.entries(data.sales.sections).forEach(([sec,items])=>{
+      items.forEach((item,i)=>{
+        const id="sales§"+sec+"§"+i;
+        if(cart[id])oldSaleCartItems.push({id,name:item.n});
+      });
+    });
+
+    // 暫存解析好的新資料，等確認後才套用
+    const pendingImport={parsed};
+
+    if(oldSaleCartItems.length>0){
+      // 有舊特惠在購物車，跳出確認
+      const names=oldSaleCartItems.map(x=>`· ${x.name}`).join("\n");
+      const choice=confirm(
+        `購物車裡有 ${oldSaleCartItems.length} 項舊特惠品項：\n\n${names}\n\n` +
+        `按「確定」→ 清除這些舊特惠品項再匯入新特惠\n` +
+        `按「取消」→ 保留購物車，只更新特惠資料`
+      );
+      if(choice){
+        // 清除購物車裡的舊特惠品項
+        oldSaleCartItems.forEach(x=>{delete cart[x.id];delete bought[x.id];});
+      }
+    }
+
+    // 套用新特惠資料
+    if(parsed.period)salesPeriod.label=parsed.period;
+    if(parsed.startDate)salesPeriod.startDate=parsed.startDate;
+    if(parsed.endDate)salesPeriod.endDate=parsed.endDate;
+    customSalesData=parsed.items;
+
+    // 清除舊特惠分頁資料
+    data.sales.sections["清單符合特惠"]=[];
+    data.sales.sections["其他特惠"]=[];
+    salesLoaded=false;
+
+    scheduleSave();
+    updatePeriodBadge();
+    renderNav();
+    if(activeKey==="sales")renderPanel();
+
+    const cleared=oldSaleCartItems.length>0;
+    const cartNote=cleared?`，已清除 ${oldSaleCartItems.length} 項舊特惠購物車品項`:"";
+    showSalesMsg("ok",`✅ 匯入成功！${parsed.items.length} 項特惠（${salesPeriod.label}）${cartNote}。請按「我的清單有特惠」或「本期全部特惠」載入。`);
+  }catch(e){showSalesMsg("err","❌ JSON 解析失敗："+e.message);}
+}
+
+function doExportSalesTemplate(){
+  const template={
+    period:"夏季特惠 2026/05/01–06/15",
+    startDate:"2026-05-01",
+    endDate:"2026-06-15",
+    items:[
+      {n:"商品名稱範例",orig:"原價",sale:"特價",save:"折扣金額",match:true,itemNo:"12345"},
+      {n:"其他特惠商品",orig:"699",sale:"539",save:"-160",match:false,itemNo:""}
+    ]
+  };
+  document.getElementById("sales-ta").value=JSON.stringify(template,null,2);
+  showSalesMsg("ok","✅ 格式範本已產生，複製後傳給 Claude，請他照此格式整理新一期特惠資料。");
+}
+function showSalesMsg(type,msg){const el=document.getElementById("sales-msg");el.className="modal-msg "+type;el.textContent=msg;}
+
+// ── Render left nav ───────────────────────────────────────
+function cartCount(){return Object.keys(cart).length;}
+function salesCount(){let c=0;Object.values(data.sales.sections).forEach(a=>c+=a.length);return c;}
+
+function renderNav(){
+  const cc=cartCount(),sc=salesLoaded?salesCount():0;
+
+  // ── 桌面左側 nav ──
+  let html="";
+  FLOORS.forEach(floor=>{
+    html+=`<div class="floor-group ${floor.cls}">
+      <div class="floor-header">${floor.label} <span style="opacity:.7;font-size:8px;font-weight:400">${floor.desc}</span></div>`;
+    floor.cats.forEach(cat=>{
+      const isCart=cat.key==="cart",isSale=cat.key==="sales";
+      const isActive=activeKey===cat.key;
+      let badge="";
+      if(isCart&&cc>0)badge=`<span class="nav-badge">${cc}</span>`;
+      if(isSale&&sc>0)badge=`<span class="nav-badge sale-badge">${sc}</span>`;
+      const activeCls=isActive?(isCart?" active-cart":isSale?" active-sale":" active"):"";
+      html+=`<div class="nav-item${activeCls}" onclick="switchCat('${cat.key}')">${cat.label}${badge}</div>`;
+    });
+    html+="</div>";
+  });
+  document.getElementById("left-nav").innerHTML=html;
+
+  // ── 手機底部 tab bar（每個 floor 一個 tab，icon 用 floor label）──
+  const FLOOR_ICONS={fcart:"🛒",fsale:"🏷",f1:"1F",fb1:"B1"};
+  const FLOOR_LABELS={fcart:"購物車",fsale:"特惠",f1:"非食品",fb1:"食品"};
+  let mhtml="";
+  FLOORS.forEach(floor=>{
+    const isActiveFloor=floor.cats.some(c=>c.key===activeKey);
+    const isCart=floor.id==="fcart",isSale=floor.id==="fsale";
+    let badge="";
+    if(isCart&&cc>0)badge=`<span class="mobile-tab-badge">${cc}</span>`;
+    if(isSale&&sc>0)badge=`<span class="mobile-tab-badge sale">${sc}</span>`;
+    const activeCls=isActiveFloor?(isCart?" active-cart":isSale?" active-sale":" active"):"";
+    mhtml+=`<button class="mobile-tab${activeCls}" onclick="switchToFloor('${floor.id}')">
+      <span class="mobile-tab-icon">${FLOOR_ICONS[floor.id]||floor.label}</span>
+      <span class="mobile-tab-label">${FLOOR_LABELS[floor.id]||floor.desc}</span>
+      ${badge}
+    </button>`;
+  });
+  document.getElementById("mobile-tabs-inner").innerHTML=mhtml;
+}
+
+function switchCat(key){activeKey=key;renderNav();renderPanel();}
+
+// 手機版：點 floor tab 跳到該 floor 第一個分類
+function switchToFloor(floorId){
+  const floor=FLOORS.find(f=>f.id===floorId);
+  if(!floor)return;
+  const firstCat=floor.cats[0];
+  if(firstCat)switchCat(firstCat.key);
+}
+
+// ── Render right panel ────────────────────────────────────
+function getCatMeta(key){
+  for(const floor of FLOORS){
+    const cat=floor.cats.find(c=>c.key===key);
+    if(cat)return{floor,cat};
+  }
+  return null;
+}
+
+function renderPanel(){
+  const panel=document.getElementById("right-panel");
+  const isCart=activeKey==="cart", isSales=activeKey==="sales";
+  document.getElementById("clear-btn").style.display=isCart?"inline-block":"none";
+  document.getElementById("checkout-btn").style.display=isCart?"inline-block":"none";
+
+  if(isCart){renderCart(panel);return;}
+
+  const meta=getCatMeta(activeKey);
+  const floorPill=meta?`<span class="floor-pill ${meta.floor.pill}">${meta.floor.label} ${meta.floor.desc}</span>`:"";
+  const catLabel=meta?.cat.label||activeKey;
+
+  // 手機版子分類橫向切換列（超過1個分類才顯示）
+  let subTabsHtml="";
+  if(meta&&meta.floor.cats.length>1){
+    subTabsHtml=`<div style="display:flex;gap:5px;overflow-x:auto;margin-bottom:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none">`;
+    meta.floor.cats.forEach(cat=>{
+      const isAct=cat.key===activeKey;
+      subTabsHtml+=`<button onclick="switchCat('${cat.key}')" style="height:26px;padding:0 10px;border-radius:13px;border:1.5px solid ${isAct?"var(--green)":"var(--border)"};background:${isAct?"var(--green-light)":"transparent"};color:${isAct?"var(--green)":"var(--text3)"};font-size:11px;font-weight:${isAct?"500":"400"};cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0">${cat.label}</button>`;
+    });
+    subTabsHtml+="</div>";
+  }
+
+  if(isSales&&!salesLoaded){
+    panel.innerHTML=`<div class="panel-header">${floorPill} ${catLabel}</div>${subTabsHtml}<div class="empty">請按上方按鈕載入特惠資料<br>「我的清單有特惠」→ 與你清單重疊<br>「本期全部特惠」→ 官網所有特惠</div>`;
+    document.getElementById("page-total").textContent=0;
+    document.getElementById("cart-count").textContent=cartCount();
+    return;
+  }
+
+  const secs=data[activeKey]?.sections||{};
+  let html=`<div class="panel-header">${floorPill} ${catLabel}</div>${subTabsHtml}`;
+  html+=`<div class="hint">${isSales?"🟢符合=你清單有且特惠 · 點🔗開官網 · 點選加入購物車":"點選品項加入購物車 · ❄️冷凍 🧊冷藏 · 移上去可刪除"}</div>`;
+  let pageTotal=0;
+
+  for(const[sec,items]of Object.entries(secs)){
+    const hasHigh=!isSales&&items.some(it=>it.freq==="high");
+    const allHigh=!isSales&&items.length>0&&items.every(it=>it.freq==="high");
+    const allLow=!isSales&&items.length>0&&items.every(it=>it.freq==="low");
+    let freqTag="";
+    if(allHigh)freqTag=`<span class="freq-tag freq-high">每週</span>`;
+    else if(allLow)freqTag=`<span class="freq-tag freq-low">低頻</span>`;
+    html+=`<div class="section-label">${sec}${freqTag}</div>`;
+    if(!items.length){html+=`<div class="empty" style="padding:10px;font-size:12px">尚無項目，可在下方新增</div>`;continue;}
+
+    items.forEach((item,i)=>{
+      const id=idOf(activeKey,sec,i);
+      const inCart=!!cart[id],q=cart[id]||1;
+      const url=item.isSale?itemUrl(item.itemNo||"",item.n):itemLink(item);
+      pageTotal++;
+      if(isSales){
+        html+=`<div class="item-row${inCart?" in-cart":""}${item.match?" is-match":""}" onclick="toggleCart('${id}')">
+          <div class="cb${inCart?" done":""}">${inCart?chk():""}</div>
+          <span class="item-name">${item.n}</span>
+          ${item.match?`<span class="tag tag-match">符合</span>`:`<span class="tag tag-sale">特惠</span>`}
+          <span class="price-info">${item.salePrice}</span>
+          <span class="orig-price">${item.originalPrice}</span>
+          ${item.saveAmt?`<span class="save-tag">${item.saveAmt}</span>`:""}
+          ${inCart?`<div class="counter" onclick="event.stopPropagation()"><button onclick="changeQty('${id}',-1)">−</button><span>${q}</span><button onclick="changeQty('${id}',1)">+</button></div>`:""}
+          <button class="item-link" onclick="openUrl('${url}',event)">🔗</button>
+          <button class="del-btn" onclick="deleteItem('${activeKey}','${sec}',${i},event)">×</button>
+        </div>`;
+      } else {
+        const tag=urgTag(item);const m=metaStr(item.last);
+        const icon=storageIcon(item.storage||"ambient");
+        const safeId=id.replace(/[§]/g,"-");
+        const escapedName=item.n.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+        html+=`<div class="item-row${inCart?" in-cart":""}" onclick="toggleCart('${id}')">
+          <div class="cb${inCart?" done":""}">${inCart?chk():""}</div>
+          <img id="thumb-${safeId}" class="item-thumb" style="display:none" onclick="event.stopPropagation();openImgModal('${id}','${escapedName}',event)" alt=""/>
+          <button class="item-thumb-placeholder" onclick="event.stopPropagation();openImgModal('${id}','${escapedName}',event)" title="新增商品圖片">📷</button>
+          ${icon?`<span class="storage-icon">${icon}</span>`:""}
+          <span class="item-name" id="name-${safeId}">${item.n}</span>
+          <span class="tag ${tag.cls}">${tag.txt}</span>
+          ${m?`<span class="item-meta">${m}</span>`:""}
+          ${inCart?`<div class="counter" onclick="event.stopPropagation()"><button onclick="changeQty('${id}',-1)">−</button><span>${q}</span><button onclick="changeQty('${id}',1)">+</button></div>`:""}
+          <button class="rename-btn" onclick="startRename('${activeKey}','${sec}',${i},event)" title="改名">✏️</button>
+          <button class="item-link" onclick="openUrl('${url}',event)">🔗</button>
+          <button class="del-btn" onclick="deleteItem('${activeKey}','${sec}',${i},event)">×</button>
+        </div>`;
+      }
+    });
+  }
+
+  if(!isSales){
+    html+=`<div class="add-row"><input id="add-input" type="text" placeholder="新增品項…" onkeydown="if(event.key==='Enter')addItem()"/><button onclick="addItem()">新增</button></div>`;
+  } else {
+    html+=`<div class="add-row"><input id="add-input" type="text" placeholder="手動新增特惠品項…" onkeydown="if(event.key==='Enter')addItem()"/><button onclick="addItem()">新增</button></div>`;
+  }
+
+  panel.innerHTML=html;
+  document.getElementById("page-total").textContent=pageTotal;
+  document.getElementById("cart-count").textContent=cartCount();
+  // 非同步載入所有縮圖
+  loadAllThumbs();
+}
+
+function renderCart(panel){
+  const TLABEL={household:"日用品",care:"個人護理",health:"保健/營養",tech:"3C",apparel:"服飾",custom:"自訂",protein:"肉品/海鮮",veg:"蔬果",dairy:"乳品",drinks:"飲品",pantry:"主食/調味",snack:"零食囤貨",readymeal:"即食熟食",bakery:"烘焙",sales:"特惠"};
+  const FLOOR_ORDER=["household","care","health","tech","apparel","custom","protein","veg","dairy","drinks","pantry","snack","readymeal","bakery","sales"];
+  const allItems=[];
+  [...ALL_CAT_KEYS,"sales"].forEach(tk=>{
+    if(!data[tk])return;
+    Object.entries(data[tk].sections).forEach(([sec,items])=>{
+      items.forEach((item,i)=>{
+        const id=idOf(tk,sec,i);
+        if(cart[id])allItems.push({id,item,tabKey:tk});
+      });
+    });
+  });
+
+  const boughtCount=allItems.filter(x=>bought[x.id]).length;
+  const checkoutBtn=document.getElementById("checkout-btn");
+  checkoutBtn.textContent=boughtCount>0?`✅ 結帳完成（${boughtCount}項已拿）`:"✅ 結帳完成";
+  checkoutBtn.style.opacity=boughtCount>0?"1":"0.5";
+  checkoutBtn.style.display=allItems.length?"inline-block":"none";
+  document.getElementById("cart-count").textContent=allItems.length;
+  document.getElementById("page-total").textContent=allItems.length;
+
+  if(!allItems.length){
+    panel.innerHTML=`<div class="panel-header"><span class="floor-pill pill-cart">🛒</span> 購物車</div><div class="empty">購物車是空的<br>請到左側各分類點選品項加入</div>`;
+    return;
+  }
+
+  // 按動線排序：1F → B1
+  const groups={};
+  allItems.forEach(x=>{const l=TLABEL[x.tabKey]||x.tabKey;if(!groups[l])groups[l]=[];groups[l].push(x);});
+  const sortedGroups=FLOOR_ORDER.map(k=>TLABEL[k]).filter(l=>groups[l]).map(l=>([l,groups[l]]));
+
+  let html=`<div class="panel-header"><span class="floor-pill pill-cart">🛒</span> 購物車</div>`;
+  html+=`<div class="hint">勾選「已拿到」→ 結帳後按「✅ 結帳完成」更新購買日期<br>順序已依 1F→B1 動線排列</div>`;
+
+  // 1F/B1 分隔
+  const floorGroups={"1F（非食品）":["日用品","個人護理","保健/營養","3C","服飾","自訂"],"B1（食品）":["肉品/海鮮","蔬果","乳品","飲品","主食/調味","零食囤貨","即食熟食","烘焙","特惠"]};
+  for(const[floorLabel,catLabels]of Object.entries(floorGroups)){
+    const floorItems=sortedGroups.filter(([l])=>catLabels.includes(l));
+    if(!floorItems.length)continue;
+    const pillCls=floorLabel.includes("1F")?"pill-1f":"pill-b1";
+    html+=`<div style="font-size:11px;font-weight:700;color:white;padding:4px 10px;border-radius:6px;margin:10px 0 6px;background:${floorLabel.includes("1F")?"var(--floor1)":"var(--floorb1)"}">${floorLabel}</div>`;
+    for(const[catLabel,items]of floorItems){
+      html+=`<div class="section-label">${catLabel}</div>`;
+      items.forEach(x=>{
+        const q=cart[x.id],isbought=!!bought[x.id];
+        const priceNote=x.item.salePrice?` · ${x.item.salePrice}`:"";
+        const url=x.item.isSale?itemUrl(x.item.itemNo||"",x.item.n):itemLink(x.item);
+        const icon=storageIcon(x.item.storage||"ambient");
+        html+=`<div class="cart-item${isbought?" done-item":""}">
+          <div class="cart-cb${isbought?" done":""}" onclick="toggleBought('${x.id}')">${isbought?chk():""}</div>
+          ${icon?`<span style="font-size:11px;flex-shrink:0">${icon}</span>`:""}
+          <span class="cart-name${isbought?" done":""}">${x.item.n}${priceNote}</span>
+          <button onclick="openUrl('${url}',event)" style="font-size:12px;color:var(--blue);background:transparent;border:none;cursor:pointer;padding:0 3px">🔗</button>
+          <div class="counter" onclick="event.stopPropagation()"><button onclick="changeQty('${x.id}',-1)">−</button><span>${q}</span><button onclick="changeQty('${x.id}',1)">+</button></div>
+          <button class="remove-btn" onclick="removeFromCart('${x.id}')">移除</button>
+        </div>`;
+      });
+    }
+  }
+
+  // 快速新增
+  html+=`<div class="quick-add-wrap">
+    <div class="quick-add-title">＋ 臨時新增新商品（結帳後自動加入主清單）</div>
+    <div class="quick-add-row">
+      <input id="quick-name" type="text" placeholder="品項名稱" onkeydown="if(event.key==='Enter')quickAdd()"/>
+      <select id="quick-cat">
+        <option value="household">🧴 日用品</option>
+        <option value="care">🧺 個人護理</option>
+        <option value="health">💊 保健/營養</option>
+        <option value="tech">💻 3C</option>
+        <option value="protein">🥩 肉品/海鮮</option>
+        <option value="veg">🥦 蔬果</option>
+        <option value="dairy">🥛 乳品</option>
+        <option value="drinks">🥤 飲品</option>
+        <option value="pantry">🍚 主食/調味</option>
+        <option value="snack">🍿 零食囤貨</option>
+        <option value="readymeal">🍱 即食熟食</option>
+        <option value="bakery">🥐 烘焙</option>
+        <option value="custom">＋ 自訂</option>
+      </select>
+      <input id="quick-cycle" type="number" min="1" max="365" value="14"/>
+      <span style="font-size:11px;color:var(--text3);white-space:nowrap">天/次</span>
+      <button class="quick-add-btn" onclick="quickAdd()">加入</button>
+    </div>
+  </div>`;
+  panel.innerHTML=html;
+}
+
+// 非同步載入頁面上所有縮圖
+async function loadAllThumbs(){
+  const secs=data[activeKey]?.sections||{};
+  for(const[sec,items]of Object.entries(secs)){
+    for(let i=0;i<items.length;i++){
+      const id=idOf(activeKey,sec,i);
+      const safeId=id.replace(/[§]/g,"-");
+      const thumb=document.getElementById("thumb-"+safeId);
+      if(!thumb)continue;
+      const src=await imgLoad(id);
+      if(src){
+        thumb.src=src;
+        thumb.style.display="block";
+        // 隱藏旁邊的 placeholder
+        const ph=thumb.nextElementSibling;
+        if(ph&&ph.classList.contains("item-thumb-placeholder"))ph.style.opacity="0";
+      }
+    }
+  }
+}
+
+// ── Actions ──────────────────────────────────────────────
+function toggleCart(id){if(cart[id]){delete cart[id];delete bought[id];}else cart[id]=1;scheduleSave();renderNav();renderPanel();}
+function changeQty(id,d){if(cart[id]!==undefined)cart[id]=Math.max(1,(cart[id]||1)+d);scheduleSave();renderPanel();}
+function removeFromCart(id){delete cart[id];delete bought[id];scheduleSave();renderNav();renderPanel();}
+function toggleBought(id){bought[id]=!bought[id];scheduleSave();renderPanel();}
+function clearCart(){if(!confirm("確定清空購物車？"))return;cart={};bought={};scheduleSave();renderNav();renderPanel();}
+// ── 改名 ─────────────────────────────────────────────────
+function startRename(tk,sec,i,e){
+  e.stopPropagation();
+  const item=data[tk]?.sections[sec]?.[i];
+  if(!item)return;
+  const id=idOf(tk,sec,i);
+  const safeId=id.replace(/[§]/g,"-");
+  const nameEl=document.getElementById("name-"+safeId);
+  if(!nameEl)return;
+
+  // 把 span 換成 input
+  const input=document.createElement("input");
+  input.type="text";
+  input.className="item-name-input";
+  input.value=item.n;
+  input.onclick=e2=>e2.stopPropagation();
+  input.onkeydown=e2=>{
+    if(e2.key==="Enter"){commitRename(tk,sec,i,input.value,nameEl,input);}
+    if(e2.key==="Escape"){nameEl.style.display="";input.remove();}
+  };
+  input.onblur=()=>commitRename(tk,sec,i,input.value,nameEl,input);
+
+  nameEl.style.display="none";
+  nameEl.parentNode.insertBefore(input,nameEl.nextSibling);
+  input.focus();
+  input.select();
+}
+
+function commitRename(tk,sec,i,newName,nameEl,input){
+  const trimmed=newName.trim();
+  if(trimmed&&trimmed!==data[tk]?.sections[sec]?.[i]?.n){
+    data[tk].sections[sec][i].n=trimmed;
+    scheduleSave();
+  }
+  nameEl.textContent=data[tk]?.sections[sec]?.[i]?.n||trimmed;
+  nameEl.style.display="";
+  try{input.remove();}catch(_){}
+}
+
+function deleteItem(tk,sec,i,e){
+  e.stopPropagation();
+  const id=idOf(tk,sec,i);
+  data[tk].sections[sec].splice(i,1);
+  delete cart[id];delete bought[id];
+  scheduleSave();renderNav();renderPanel();
+}
+function addItem(){
+  const inp=document.getElementById("add-input");
+  const v=inp?.value.trim();if(!v)return;
+  const sec=Object.keys(data[activeKey].sections)[0];
+  data[activeKey].sections[sec].push({n:v,last:null,cycle:14,freq:"low",storage:"ambient"});
+  inp.value="";scheduleSave();renderPanel();
+}
+function quickAdd(){
+  const nameEl=document.getElementById("quick-name");
+  const name=nameEl?.value.trim();if(!name){nameEl?.focus();return;}
+  const targetTab=document.getElementById("quick-cat")?.value||"custom";
+  const cycle=parseInt(document.getElementById("quick-cycle")?.value)||14;
+  const sec=Object.keys(data.custom.sections)[0];
+  const newItem={n:name,last:null,cycle,freq:"low",storage:"ambient",isNew:true,targetTab};
+  data.custom.sections[sec].push(newItem);
+  const idx=data.custom.sections[sec].length-1;
+  const id=idOf("custom",sec,idx);
+  cart[id]=1;bought[id]=true;
+  if(nameEl)nameEl.value="";
+  scheduleSave();renderNav();renderCart(document.getElementById("right-panel"));
+}
+
+// ── 結帳 ─────────────────────────────────────────────────
+function checkout(){
+  const allItems=[];
+  [...ALL_CAT_KEYS,"sales"].forEach(tk=>{
+    if(!data[tk])return;
+    Object.entries(data[tk].sections).forEach(([sec,items])=>{
+      items.forEach((item,i)=>{const id=idOf(tk,sec,i);if(cart[id])allItems.push({id,item,tabKey:tk,sec});});
+    });
+  });
+  const doneItems=allItems.filter(x=>bought[x.id]);
+  const pendingItems=allItems.filter(x=>!bought[x.id]);
+  if(!doneItems.length){alert("請先勾選「已拿到」的品項。");return;}
+  const newItems=doneItems.filter(x=>x.item.isNew);
+  const today=new Date().toLocaleDateString("zh-TW");
+  let summary=`今天（${today}）將更新 ${doneItems.length} 項購買日期`;
+  if(newItems.length)summary+=`，${newItems.length} 項新品加入主清單`;
+  if(pendingItems.length)summary+=`，${pendingItems.length} 項未購買保留購物車`;
+  document.getElementById("checkout-summary").textContent=summary+"。";
+  let detail="<b>✅ 已購買：</b><br>";
+  doneItems.forEach(x=>{detail+=`· ${x.item.n}${x.item.isNew?' <span style="color:var(--green);font-size:10px">（新品）</span>':""}<br>`;});
+  if(pendingItems.length){detail+="<br><b>⏳ 未購買：</b><br>";pendingItems.forEach(x=>{detail+=`· ${x.item.n}<br>`;});}
+  document.getElementById("checkout-detail").innerHTML=detail;
+  document.getElementById("checkout-modal").classList.add("open");
+}
+async function confirmCheckout(){
+  const today=new Date().toISOString().slice(0,10);
+  const saleValid=isSaleValid();
+  let updatedCount=0,addedCount=0,saleUpdated=0,expiredSkipped=0;
+
+  [...ALL_CAT_KEYS,"sales"].forEach(tk=>{
+    if(!data[tk])return;
+    Object.entries(data[tk].sections).forEach(([sec,items])=>{
+      items.forEach((item,i)=>{
+        const id=idOf(tk,sec,i);
+        if(!(cart[id]&&bought[id]))return;
+
+        if(item.isSale){
+          // 特惠品項
+          if(!saleValid){
+            // 特惠已過期 → 只從購物車移除，不更新日期，不計入結帳
+            delete cart[id];delete bought[id];
+            expiredSkipped++;
+            return;
+          }
+          if(item.match){
+            // match:true → 在主清單找對應品項更新日期
+            let found=false;
+            ALL_CAT_KEYS.forEach(tk2=>{
+              Object.values(data[tk2].sections).forEach(arr=>{
+                arr.forEach(it=>{
+                  if(!found&&it.n&&item.n&&(it.n===item.n||it.n.includes(item.n.slice(0,8))||item.n.includes(it.n.slice(0,8)))){
+                    it.last=today;found=true;saleUpdated++;
+                  }
+                });
+              });
+            });
+          }
+          // match:false → 不更新日期，只從購物車移除
+          delete cart[id];delete bought[id];
+          updatedCount++;
+        } else {
+          // 一般品項 → 正常更新日期
+          item.last=today;
+          if(item.isNew&&item.targetTab&&item.targetTab!=="custom"){
+            const tgt=data[item.targetTab]?.sections;
+            if(tgt){
+              const firstSec=Object.keys(tgt)[0];
+              const already=Object.values(tgt).flat().some(x=>x.n===item.n);
+              if(!already){tgt[firstSec].push({n:item.n,last:today,cycle:item.cycle||14,freq:"low",storage:"ambient"});addedCount++;}
+            }
+          }
+          delete item.isNew;delete item.targetTab;
+          delete cart[id];delete bought[id];
+          updatedCount++;
+        }
+      });
+    });
+  });
+
+  await saveState();
+  document.getElementById("checkout-modal").classList.remove("open");
+  renderNav();renderPanel();
+
+  const ind=document.getElementById("save-ind");
+  let msg=`✅ 結帳完成！更新 ${updatedCount} 項`;
+  if(saleUpdated)msg+=`，${saleUpdated} 項特惠同步主清單日期`;
+  if(addedCount)msg+=`，${addedCount} 項新品已存入清單`;
+  if(expiredSkipped)msg+=`，${expiredSkipped} 項過期特惠已移除`;
+  ind.textContent=msg;
+  setTimeout(()=>{ind.textContent=(USE_CLOUD?"☁️":"💾")+" 已儲存";},4500);
+}
+function closeCheckoutModal(){document.getElementById("checkout-modal").classList.remove("open");}
+
+// ── 匯出/匯入 ────────────────────────────────────────────
+// ── GitHub Gist 同步 ─────────────────────────────────────
+const GIST_FILENAME="costco-list-sync.json";
+let GIST_ID=null;
+
+// Token 存在 localStorage（不進 Storage API，避免跨對話外洩）
+function getToken(){try{return localStorage.getItem("cco-gist-token")||"";}catch(_){return "";}}
+function saveToken(){
+  const v=document.getElementById("token-input")?.value.trim();
+  if(!v){showGistMsg("err","❌ 請輸入 Token");return;}
+  try{localStorage.setItem("cco-gist-token",v);}catch(_){}
+  updateTokenStatus();
+  showGistMsg("ok","✅ Token 已儲存到本機");
+}
+function updateTokenStatus(){
+  const el=document.getElementById("token-status");
+  const inp=document.getElementById("token-input");
+  if(!el)return;
+  const t=getToken();
+  if(t){
+    el.textContent="✅ Token 已設定（"+t.slice(0,8)+"…）";
+    el.style.color="var(--green)";
+    if(inp)inp.value="";
+  } else {
+    el.textContent="⚠️ 尚未設定 Token，請輸入後按「儲存」";
+    el.style.color="var(--amber)";
+  }
+}
+
+function gistPayload(){
+  return{
+    version:2,
+    syncedAt:new Date().toISOString(),
+    data,cart,bought,salesLoaded,
+    salesPeriod,
+    customSalesData
+  };
+}
+
+function showGistMsg(type,msg){
+  const el=document.getElementById("gist-msg");
+  el.className="modal-msg "+type;el.textContent=msg;
+}
+function gistBtnState(loading){
+  document.getElementById("btn-gist-push").disabled=loading;
+  document.getElementById("btn-gist-pull").disabled=loading;
+}
+
+// 找現有 Gist
+async function findGist(){
+  if(GIST_ID)return GIST_ID;
+  // 先從本地快取讀
+  const cached=await storeLoad("cco-gist-id");
+  if(cached){GIST_ID=cached;return GIST_ID;}
+  // 搜尋現有 gist
+  const res=await fetch("https://api.github.com/gists",{
+    headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json"}
+  });
+  if(!res.ok)return null;
+  const list=await res.json();
+  const found=list.find(g=>g.files&&g.files[GIST_FILENAME]);
+  if(found){GIST_ID=found.id;await storeSave("cco-gist-id",GIST_ID);}
+  return GIST_ID;
+}
+
+async function gistPush(){
+  if(!getToken()){showGistMsg("err","❌ 請先設定 GitHub Token");return;}
+  gistBtnState(true);
+  showGistMsg("ok","推送中…");
+  try{
+    const body={
+      description:"Costco 新莊採購清單同步資料",
+      public:false,
+      files:{[GIST_FILENAME]:{content:JSON.stringify(gistPayload(),null,2)}}
+    };
+    const existingId=await findGist();
+    let res;
+    if(existingId){
+      // 更新現有 Gist
+      res=await fetch(`https://api.github.com/gists/${existingId}`,{
+        method:"PATCH",
+        headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json","Content-Type":"application/json"},
+        body:JSON.stringify(body)
+      });
+    } else {
+      // 建立新 Gist
+      res=await fetch("https://api.github.com/gists",{
+        method:"POST",
+        headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json","Content-Type":"application/json"},
+        body:JSON.stringify(body)
+      });
+    }
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const result=await res.json();
+    GIST_ID=result.id;
+    await storeSave("cco-gist-id",GIST_ID);
+    const t=new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+    showGistMsg("ok",`✅ 已推送到雲端（${t}）。在另一台裝置按「從雲端拉取」即可同步。`);
+    document.getElementById("save-ind").textContent="☁️ Gist 已同步 "+t;
+  }catch(e){
+    showGistMsg("err","❌ 推送失敗："+e.message);
+  }
+  gistBtnState(false);
+}
+
+async function gistPull(){
+  if(!getToken()){showGistMsg("err","❌ 請先設定 GitHub Token");return;}
+  gistBtnState(true);
+  showGistMsg("ok","拉取中…");
+  try{
+    const id=await findGist();
+    if(!id)throw new Error("找不到雲端資料，請先在另一台裝置推送");
+    const res=await fetch(`https://api.github.com/gists/${id}`,{
+      headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json"}
+    });
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const gist=await res.json();
+    const content=gist.files?.[GIST_FILENAME]?.content;
+    if(!content)throw new Error("找不到同步檔案");
+    const payload=JSON.parse(content);
+    if(!payload.version||!payload.data)throw new Error("資料格式不正確");
+    // 套用
+    data=payload.data;
+    cart=payload.cart||{};
+    bought=payload.bought||{};
+    salesLoaded=payload.salesLoaded||false;
+    if(payload.salesPeriod)Object.assign(salesPeriod,payload.salesPeriod);
+    if(payload.customSalesData)customSalesData=payload.customSalesData;
+    await saveState();
+    updatePeriodBadge();
+    renderNav();renderPanel();
+    const t=new Date(payload.syncedAt).toLocaleString("zh-TW");
+    showGistMsg("ok",`✅ 拉取成功！雲端資料時間：${t}`);
+  }catch(e){
+    showGistMsg("err","❌ 拉取失敗："+e.message);
+  }
+  gistBtnState(false);
+}
+
+// ── 手動匯出/匯入（保留作為備用）────────────────────────
+function openSyncModal(){
+  document.getElementById("sync-modal").classList.add("open");
+  document.getElementById("sync-ta").value="";
+  document.getElementById("sync-msg").className="modal-msg";
+  document.getElementById("gist-msg").className="modal-msg";
+  updateTokenStatus();
+}
+function closeSyncModal(){document.getElementById("sync-modal").classList.remove("open");}
+function doExport(){
+  const payload={version:1,exportedAt:new Date().toISOString(),source:USE_CLOUD?"cloud":"local",data,cart,bought,salesLoaded};
+  const json=JSON.stringify(payload,null,2);
+  document.getElementById("sync-ta").value=json;
+  try{navigator.clipboard.writeText(json).then(()=>showSyncMsg("ok","✅ 已複製到剪貼簿！")).catch(()=>showSyncMsg("ok","✅ 資料已產生，請手動複製。"));}
+  catch(_){showSyncMsg("ok","✅ 資料已產生，請手動複製。");}
+}
+async function doImport(){
+  const raw=document.getElementById("sync-ta").value.trim();
+  if(!raw){showSyncMsg("err","❌ 請先貼上要匯入的資料。");return;}
+  try{
+    const payload=JSON.parse(raw);
+    if(!payload.version||!payload.data){showSyncMsg("err","❌ 格式不正確。");return;}
+    data=payload.data;cart=payload.cart||{};bought=payload.bought||{};salesLoaded=payload.salesLoaded||false;
+    await saveState();renderNav();renderPanel();
+    showSyncMsg("ok",`✅ 匯入成功！來源：${payload.source==="cloud"?"Claude.ai":"本機"}，時間：${new Date(payload.exportedAt).toLocaleString("zh-TW")}`);
+  }catch(e){showSyncMsg("err","❌ 解析失敗："+e.message);}
+}
+function showSyncMsg(type,msg){const el=document.getElementById("sync-msg");el.className="modal-msg "+type;el.textContent=msg;}
+
+// ── Init ─────────────────────────────────────────────────
+async function init(){
+  await loadState();
+  updatePeriodBadge();
+  document.getElementById("visit-date")?.addEventListener("change",onVisitDateChange);
+  renderNav();renderPanel();
+  // 嘗試自動從 Gist 拉取（靜默，不顯示 modal）
+  try{
+    if(!getToken())throw new Error("no token");
+    const id=await findGist();
+    if(id){
+      const res=await fetch(`https://api.github.com/gists/${id}`,{
+        headers:{Authorization:`token ${getToken()}`,Accept:"application/vnd.github.v3+json"}
+      });
+      if(res.ok){
+        const gist=await res.json();
+        const content=gist.files?.[GIST_FILENAME]?.content;
+        if(content){
+          const payload=JSON.parse(content);
+          const remoteTime=new Date(payload.syncedAt||0);
+          const localSaved=await storeLoad("cco-last-sync");
+          const localTime=localSaved?new Date(localSaved):new Date(0);
+          // 只有雲端比本地新才自動套用
+          if(remoteTime>localTime&&payload.data){
+            data=payload.data;
+            cart=payload.cart||{};
+            bought=payload.bought||{};
+            salesLoaded=payload.salesLoaded||false;
+            if(payload.salesPeriod)Object.assign(salesPeriod,payload.salesPeriod);
+            if(payload.customSalesData)customSalesData=payload.customSalesData;
+            await saveState();
+            await storeSave("cco-last-sync",payload.syncedAt);
+            updatePeriodBadge();
+            renderNav();renderPanel();
+            const t=new Date(payload.syncedAt).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+            document.getElementById("save-ind").textContent=`☁️ 已從 Gist 自動同步（${t}）`;
+          } else {
+            document.getElementById("save-ind").textContent="☁️ 雲端 · 資料已是最新";
+          }
+        }
+      }
+    }
+  }catch(_){}
+}
+init();
+</script>
+</body>
+</html>
