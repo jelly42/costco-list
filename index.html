@@ -256,12 +256,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
   <div class="img-modal" onclick="event.stopPropagation()">
     <h3 id="img-modal-title">商品圖片</h3>
     <img id="img-preview" class="img-preview" alt="商品圖片"/>
-    <div class="img-upload-area" title="點擊或拖曳截圖上傳">
+    <div class="img-upload-area" id="img-paste-area" title="點擊、拖曳或 Ctrl+V 貼上截圖" tabindex="0"
+         onpaste="handlePaste(event)" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
       <input type="file" id="img-file-input" accept="image/*" onchange="handleFileUpload(event)"/>
-      <p>📷 點擊上傳截圖<br><span style="font-size:11px">或從相簿選取（支援 JPG/PNG）</span></p>
+      <p>📷 點擊上傳 / 拖曳 / <b>Ctrl+V 貼上</b><br><span style="font-size:11px">手機可長按此區域貼上截圖</span></p>
     </div>
     <div class="img-url-row">
-      <input type="text" id="img-url-input" placeholder="或貼上圖片網址（https://...）"/>
+      <input type="text" id="img-url-input" placeholder="或貼上圖片網址（https://...）" onpaste="handleUrlPaste(event)"/>
       <button onclick="previewFromUrl()">預覽</button>
     </div>
     <div class="img-msg" id="img-msg"></div>
@@ -689,7 +690,6 @@ async function openImgModal(id,name,e){
   document.getElementById("img-url-input").value="";
   document.getElementById("img-file-input").value="";
   document.getElementById("img-msg").textContent="";
-  // 載入現有圖片
   const existing=await imgLoad(id);
   const preview=document.getElementById("img-preview");
   const delBtn=document.getElementById("img-btn-del");
@@ -702,8 +702,15 @@ async function openImgModal(id,name,e){
     delBtn.style.display="none";
   }
   document.getElementById("img-modal").classList.add("open");
+  // 讓貼上區可以接收 focus（方便鍵盤 Ctrl+V）
+  setTimeout(()=>document.getElementById("img-paste-area")?.focus(),100);
+  attachGlobalPaste();
 }
-function closeImgModal(){document.getElementById("img-modal").classList.remove("open");imgCurrentId=null;imgPendingData=null;}
+function closeImgModal(){
+  document.getElementById("img-modal").classList.remove("open");
+  imgCurrentId=null;imgPendingData=null;
+  detachGlobalPaste();
+}
 
 function handleFileUpload(e){
   const file=e.target.files[0];
@@ -716,6 +723,79 @@ function handleFileUpload(e){
     const kb=Math.round(data.length*0.75/1024);
     document.getElementById("img-msg").textContent=`✅ 已壓縮至約 ${kb}KB，按「儲存圖片」確認`;
   });
+}
+
+// 從 clipboard 物件取得圖片
+function processClipboardImage(clipboardData){
+  if(!clipboardData)return false;
+  const items=clipboardData.items||[];
+  for(const item of items){
+    if(item.type.startsWith("image/")){
+      const file=item.getAsFile();
+      if(file){
+        compressImage(file,data=>{
+          imgPendingData=data;
+          const preview=document.getElementById("img-preview");
+          preview.src=data;preview.classList.add("show");
+          const kb=Math.round(data.length*0.75/1024);
+          document.getElementById("img-msg").textContent=`✅ 圖片已貼上（約 ${kb}KB），按「儲存圖片」確認`;
+        });
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function handlePaste(e){
+  e.preventDefault();
+  if(processClipboardImage(e.clipboardData)) return;
+  // 若不是圖片，嘗試當網址處理
+  const text=(e.clipboardData||window.clipboardData)?.getData("text")||"";
+  if(text.startsWith("http")){
+    document.getElementById("img-url-input").value=text;
+    previewFromUrl();
+  }
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  const file=e.dataTransfer?.files?.[0];
+  if(file&&file.type.startsWith("image/")){
+    compressImage(file,data=>{
+      imgPendingData=data;
+      const preview=document.getElementById("img-preview");
+      preview.src=data;preview.classList.add("show");
+      const kb=Math.round(data.length*0.75/1024);
+      document.getElementById("img-msg").textContent=`✅ 已拖入圖片（約 ${kb}KB），按「儲存圖片」確認`;
+    });
+  }
+}
+
+// 網址欄貼上時自動判斷是否為圖片網址
+function handleUrlPaste(e){
+  setTimeout(()=>{
+    const v=document.getElementById("img-url-input")?.value.trim();
+    if(v&&v.startsWith("http"))previewFromUrl();
+  },50);
+}
+
+// 全域 paste 監聽（Modal 開啟時，在 Modal 外按 Ctrl+V 也能貼入）
+let _globalPasteHandler=null;
+function attachGlobalPaste(){
+  _globalPasteHandler=e=>{
+    // 只在 img-modal 開啟時才攔截，且不是在 input/textarea 內
+    const modal=document.getElementById("img-modal");
+    if(!modal?.classList.contains("open"))return;
+    const tag=(e.target?.tagName||"").toLowerCase();
+    if(tag==="input"||tag==="textarea")return;
+    if(processClipboardImage(e.clipboardData))e.preventDefault();
+  };
+  document.addEventListener("paste",_globalPasteHandler);
+}
+function detachGlobalPaste(){
+  if(_globalPasteHandler)document.removeEventListener("paste",_globalPasteHandler);
+  _globalPasteHandler=null;
 }
 
 function previewFromUrl(){
